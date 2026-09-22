@@ -58,7 +58,16 @@
             transform: none !important;
             box-shadow: none !important;
         }
-
+        
+        /* ✨ 이로치 전용 후광 및 반짝임 효과 */
+        @keyframes shinyGlow {
+            0%, 100% { filter: drop-shadow(0 0 15px #f59e0b) brightness(1.25) saturate(1.5); }
+            50% { filter: drop-shadow(0 0 25px #fbbf24) brightness(1.5) saturate(2); }
+        }
+        .shiny-glow {
+            animation: shinyGlow 1.2s ease-in-out infinite;
+        }
+        
         /* 배틀 모션 애니메이션 */
         .anim-partner-atk {
             transform: translate(60px, -40px) scale(1.1) !important;
