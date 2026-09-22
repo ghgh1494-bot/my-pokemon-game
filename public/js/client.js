@@ -48,7 +48,6 @@ function initWebSocket(starterId) {
             inBattleState = true;
             updateUI(data.user);
             
-            // 야생 포켓몬 정면 일러스트 표시
             const enemyCard = document.getElementById('enemy-hp-card');
             const enemyContainer = document.getElementById('enemy-sprite-container');
             const enemyImg = document.getElementById('enemy-pokemon-img');
@@ -71,7 +70,6 @@ function initWebSocket(starterId) {
                 updatePartnerHpUI(data.partnerHp, data.partnerMaxHp);
             }
 
-            // 상호작용 피격 애니메이션
             if (data.attacker === 'partner') {
                 const partnerSprite = document.getElementById('partner-sprite-container');
                 const enemySprite = document.getElementById('enemy-pokemon-img');
@@ -166,11 +164,13 @@ function updateUI(user) {
     const p = user.partner;
     document.getElementById('partner-name').innerText = p.name;
     document.getElementById('partner-level').innerText = `Lv.${p.level}`;
-    document.getElementById('btn-skill-text').innerText = `${p.skillName} (${p.pp}/${p.maxPp})`;
     
+    // 스킬 버튼 이름과 PP 분리 업데이트
+    document.getElementById('btn-skill-name').innerText = p.skillName || '스킬';
+    document.getElementById('btn-skill-pp').innerText = `(${p.pp}/${p.maxPp})`;
+
     updatePartnerHpUI(p.hp, p.stats.maxHp);
 
-    // 좌측 스탯 카드 업데이트
     document.getElementById('status-card-img').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`;
     document.getElementById('status-card-name').innerText = p.name;
     const expPct = Math.floor((p.exp / p.maxExp) * 100);
@@ -185,7 +185,6 @@ function updateUI(user) {
     document.getElementById('stat-affinity').innerText = `${Math.floor(p.affinity)}%`;
     document.getElementById('stat-pp').innerText = `${p.pp} / ${p.maxPp}`;
 
-    // 내 파트너 뒷모습 스프라이트 연동
     document.getElementById('partner-pokemon-img').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${p.id}.png`;
 
     document.getElementById('count-poke').innerText = user.balls.poke || 0;
