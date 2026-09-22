@@ -226,8 +226,8 @@ wss.on('connection', (ws) => {
                 const zone = ZONES[user.currentZone];
                 const wildId = zone.pool[Math.floor(Math.random() * zone.pool.length)];
                 
-                // ✨ 이로치(Shiny) 출현 확률 5% (1/20)로 대폭 상향!
-                const isShiny = Math.random() < 0.05; 
+                // ✨ 이로치(Shiny) 출현 확률 1% (1/100)로 대폭 상향!
+                const isShiny = Math.random() < 0.01; 
                 const wildLevel = Math.floor(Math.random() * (zone.maxLevel - zone.minLevel + 1)) + zone.minLevel;
                 const wildStats = calculateStats(wildId, wildLevel);
 
