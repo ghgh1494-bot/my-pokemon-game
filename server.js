@@ -203,6 +203,15 @@ wss.on('connection', (ws) => {
 
             if (data.type === 'CHANGE_ZONE') {
                 const targetZoneId = parseInt(data.zoneId);
+                // 전투 중에는 도망치거나 전투 종료 후 이동 가능
+                if (user.activeWild) {
+                    ws.send(JSON.stringify({
+                        type: 'LOG',
+                        msg: '⚠️ 야생 포켓몬과 전투 중에는 지역을 이동할 수 없습니다! (도망치기를 먼저 사용하세요)'
+                    }));
+                    return;
+                }
+
                 if (user.unlockedZones.includes(targetZoneId)) {
                     user.currentZone = targetZoneId;
                     user.currentZoneName = ZONES[targetZoneId].name;
