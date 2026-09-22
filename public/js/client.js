@@ -109,7 +109,7 @@ function initWebSocket(starterId) {
         }
 
         if (data.type === 'CATCH_SUCCESS') {
-            playPokeballAnim(() => {
+            playPokeballAnim(true, () => {
                 inBattleState = false;
                 currentUserData = data.user;
                 toggleBattleButtons(false);
@@ -119,7 +119,7 @@ function initWebSocket(starterId) {
         }
 
         if (data.type === 'CATCH_FAIL') {
-            playPokeballAnim(() => {
+            playPokeballAnim(false, () => {
                 if (data.msg) setMessage(data.msg);
             });
         }
