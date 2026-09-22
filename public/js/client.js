@@ -311,9 +311,15 @@ function renderPokedexGrid(caughtList) {
 function renderTrainerList(users) {
     const list = document.getElementById('trainer-list');
     list.innerHTML = users.map(u => `
-        <li class="flex justify-between items-center text-slate-300">
-            <span>${u.nickname}</span>
-            <span class="text-[10px] text-emerald-400">${u.zoneName}</span>
+        <li class="flex justify-between items-center bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
+            <div class="flex flex-col">
+                <span class="font-bold text-slate-200 text-xs">${u.nickname}</span>
+                <span class="text-[10px] text-slate-400">${u.partnerName} (Lv.${u.partnerLevel})</span>
+            </div>
+            <div class="text-right">
+                <div class="text-[11px] font-bold text-amber-400">⚡ CP ${u.cp.toLocaleString()}</div>
+                <div class="text-[9px] text-emerald-400">${u.zoneName}</div>
+            </div>
         </li>
     `).join('');
 }
