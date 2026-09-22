@@ -142,24 +142,51 @@ function initWebSocket(starterId) {
     };
 }
 
-function playPokeballAnim(callback) {
+function playPokeballAnim(isSuccess, callback) {
     const ballContainer = document.getElementById('thrown-pokeball');
     const ballSprite = document.getElementById('ball-sprite');
-    ballSprite.src = ballImages[selectedBallType] || ballImages.poke;
+    const enemyImg = document.getElementById('enemy-pokemon-img');
 
+    // 1. 초기화 및 볼 아이콘 설정
+    ballSprite.src = ballImages[selectedBallType] || ballImages.poke;
+    ballContainer.className = "absolute left-6 bottom-2 w-10 h-10 z-30"; // 내 포켓몬 위치에서 시작
+    ballContainer.style.transform = "none";
     ballContainer.classList.remove('hidden');
-    ballContainer.classList.add('animate-throw');
+
+    // Step 1: 상대 포켓몬 방향으로 볼 투척 (0.6초)
+    ballContainer.classList.add('animate-throw-target');
 
     setTimeout(() => {
-        ballContainer.classList.remove('animate-throw');
-        ballContainer.classList.add('animate-shake');
+        // Step 2: 포켓몬 타격 및 볼 안으로 흡수 연출 (0.3초)
+        ballContainer.classList.remove('animate-throw-target');
+        enemyImg.classList.add('animate-absorb');
 
         setTimeout(() => {
-            ballContainer.classList.remove('animate-shake');
-            ballContainer.classList.add('hidden');
-            if (callback) callback();
-        }, 1200);
-    }, 800);
+            // Step 3: 볼 바닥 착지 (0.4초)
+            ballContainer.classList.add('animate-drop');
+
+            setTimeout(() => {
+                // Step 4: 원작 스타일 4회 흔들림 (0.5초 x 4회 = 2.0초)
+                ballContainer.classList.remove('animate-drop');
+                ballContainer.classList.add('animate-shake-4times');
+
+                setTimeout(() => {
+                    // Step 5: 포획 결과 처리
+                    ballContainer.classList.remove('animate-shake-4times');
+                    ballContainer.classList.add('hidden');
+                    enemyImg.classList.remove('animate-absorb');
+
+                    if (!isSuccess) {
+                        // 포획 실패 시 상대 포켓몬 재출현
+                        enemyImg.style.opacity = "1";
+                        enemyImg.style.transform = "scale(1)";
+                    }
+
+                    if (callback) callback();
+                }, 2000); // 4회 흔들림 시간
+            }, 400);
+        }, 300);
+    }, 600);
 }
 
 function updateUI(user) {
