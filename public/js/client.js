@@ -308,9 +308,10 @@ function renderPokedexGrid(caughtList) {
     }
 
     grid.innerHTML = caughtList.map(p => `
-        <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 flex flex-col items-center shadow-md">
+        <div class="bg-slate-800/80 border ${p.isShiny ? 'border-amber-400/80' : 'border-slate-700/80'} rounded-xl p-3 flex flex-col items-center shadow-md relative overflow-hidden">
+            ${p.isShiny ? '<span class="absolute top-1 right-1 px-1.5 py-0.5 text-[9px] font-bold bg-amber-500 text-slate-950 rounded-md shadow">✨이로치</span>' : ''}
             <div class="w-20 h-20 bg-slate-900/60 rounded-lg p-2 flex items-center justify-center mb-2">
-                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png" class="max-w-full max-h-full object-contain filter drop-shadow">
+                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png" class="max-w-full max-h-full object-contain filter drop-shadow ${p.isShiny ? 'shiny-glow' : ''}">
             </div>
             <span class="text-xs text-slate-400 font-mono">No.${String(p.id).padStart(3, '0')}</span>
             <h3 class="font-game text-sm text-amber-300 mt-0.5">${p.isShiny ? '✨' : ''}${p.name}</h3>
