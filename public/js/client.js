@@ -48,10 +48,14 @@ function initWebSocket(starterId) {
             inBattleState = true;
             updateUI(data.user);
             
-            // 전투 시 야생 포켓몬 스탯 및 이미지 표시
-            document.getElementById('enemy-hp-card').classList.remove('invisible');
-            const pImg = document.getElementById('pokemon-img');
-            pImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${data.wild.id}.png`;
+            // 야생 포켓몬 정면 일러스트 표시
+            const enemyCard = document.getElementById('enemy-hp-card');
+            const enemyContainer = document.getElementById('enemy-sprite-container');
+            const enemyImg = document.getElementById('enemy-pokemon-img');
+
+            enemyCard.classList.remove('invisible');
+            enemyContainer.classList.remove('invisible');
+            enemyImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${data.wild.id}.png`;
 
             document.getElementById('pokemon-name').innerText = `${data.wild.isShiny ? '✨' : ''}${data.wild.name}`;
             document.getElementById('pokemon-level').innerText = `Lv.${data.wild.level}`;
@@ -67,9 +71,26 @@ function initWebSocket(starterId) {
                 updatePartnerHpUI(data.partnerHp, data.partnerMaxHp);
             }
 
-            const img = document.getElementById('pokemon-img');
-            img.classList.add('translate-x-2');
-            setTimeout(() => img.classList.remove('translate-x-2'), 150);
+            // 상호작용 피격 애니메이션
+            if (data.attacker === 'partner') {
+                const partnerSprite = document.getElementById('partner-sprite-container');
+                const enemySprite = document.getElementById('enemy-pokemon-img');
+                
+                partnerSprite.classList.add('anim-partner-atk');
+                setTimeout(() => partnerSprite.classList.remove('anim-partner-atk'), 200);
+
+                enemySprite.classList.add('damage-flash');
+                setTimeout(() => enemySprite.classList.remove('damage-flash'), 250);
+            } else if (data.attacker === 'enemy') {
+                const enemySprite = document.getElementById('enemy-sprite-container');
+                const partnerSprite = document.getElementById('partner-pokemon-img');
+
+                enemySprite.classList.add('anim-enemy-atk');
+                setTimeout(() => enemySprite.classList.remove('anim-enemy-atk'), 200);
+
+                partnerSprite.classList.add('damage-flash');
+                setTimeout(() => partnerSprite.classList.remove('damage-flash'), 250);
+            }
 
             if (data.msg) setMessage(data.msg);
         }
@@ -145,20 +166,35 @@ function updateUI(user) {
     const p = user.partner;
     document.getElementById('partner-name').innerText = p.name;
     document.getElementById('partner-level').innerText = `Lv.${p.level}`;
-    document.getElementById('btn-skill-text').innerText = p.skillName || '스킬';
+    document.getElementById('btn-skill-text').innerText = `${p.skillName} (${p.pp}/${p.maxPp})`;
     
     updatePartnerHpUI(p.hp, p.stats.maxHp);
-    updatePartnerExpUI(p.exp, p.maxExp);
+
+    // 좌측 스탯 카드 업데이트
+    document.getElementById('status-card-img').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`;
+    document.getElementById('status-card-name').innerText = p.name;
+    const expPct = Math.floor((p.exp / p.maxExp) * 100);
+    document.getElementById('status-card-level').innerText = `Lv.${p.level} (EXP ${expPct}%)`;
+
+    document.getElementById('stat-hp').innerText = `${p.hp} / ${p.stats.maxHp}`;
+    document.getElementById('stat-atk').innerText = p.stats.atk;
+    document.getElementById('stat-def').innerText = p.stats.def;
+    document.getElementById('stat-spatk').innerText = p.stats.spAtk;
+    document.getElementById('stat-spdef').innerText = p.stats.spDef;
+    document.getElementById('stat-spd').innerText = p.stats.spd;
+    document.getElementById('stat-affinity').innerText = `${Math.floor(p.affinity)}%`;
+    document.getElementById('stat-pp').innerText = `${p.pp} / ${p.maxPp}`;
+
+    // 내 파트너 뒷모습 스프라이트 연동
+    document.getElementById('partner-pokemon-img').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${p.id}.png`;
 
     document.getElementById('count-poke').innerText = user.balls.poke || 0;
     document.getElementById('count-super').innerText = user.balls.super || 0;
     document.getElementById('count-hyper').innerText = user.balls.hyper || 0;
 
-    // 평상시(비전투): 메인 중앙에 내 파트너 포켓몬 표시
     if (!inBattleState) {
         document.getElementById('enemy-hp-card').classList.add('invisible');
-        const img = document.getElementById('pokemon-img');
-        img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`;
+        document.getElementById('enemy-sprite-container').classList.add('invisible');
         toggleBattleButtons(false);
     }
 }
@@ -178,12 +214,6 @@ function updatePartnerHpUI(hp, maxHp) {
     document.getElementById('partner-hp-text').innerText = `${hp} / ${maxHp}`;
     const pct = Math.max(0, (hp / maxHp) * 100);
     document.getElementById('partner-hp-bar').style.width = `${pct}%`;
-}
-
-function updatePartnerExpUI(exp, maxExp) {
-    const pct = Math.floor(Math.max(0, (exp / maxExp) * 100));
-    document.getElementById('partner-exp-text').innerText = `EXP ${pct}%`;
-    document.getElementById('partner-exp-bar').style.width = `${pct}%`;
 }
 
 function toggleBattleButtons(inBattle) {
@@ -222,7 +252,9 @@ function selectBall(type) {
 }
 
 function setMessage(msg) {
-    document.getElementById('game-message').innerText = msg;
+    const msgEl = document.getElementById('game-message');
+    msgEl.innerText = msg;
+    msgEl.parentElement.scrollTop = msgEl.parentElement.scrollHeight;
 }
 
 function renderZoneList(zones, unlockedZones, currentZone) {
@@ -324,7 +356,7 @@ document.getElementById('btn-open-train').addEventListener('click', () => {
 document.getElementById('btn-open-heal').addEventListener('click', () => {
     if (!currentUserData) return;
     const p = currentUserData.partner;
-    const healCost = (p.stats.maxHp - p.hp) * 10 + (p.fatigue * 5);
+    const healCost = (p.stats.maxHp - p.hp) * 10 + (p.maxPp - p.pp) * 20;
     document.getElementById('heal-current-hp').innerText = `${p.hp} / ${p.stats.maxHp}`;
     document.getElementById('heal-cost-val').innerText = healCost.toLocaleString();
     document.getElementById('heal-modal').classList.remove('hidden');
@@ -333,11 +365,11 @@ document.getElementById('btn-open-evolve').addEventListener('click', () => {
     if (!currentUserData) return;
     const p = currentUserData.partner;
     const evoInfo = {
-        1: { reqLv: 16, stone: '없음 (레벨 조건 달성 시)' },
+        1: { reqLv: 16, stone: '없음 (레벨 달성 시)' },
         2: { reqLv: 32, stone: '리프의 돌' },
-        4: { reqLv: 16, stone: '없음 (레벨 조건 달성 시)' },
+        4: { reqLv: 16, stone: '없음 (레벨 달성 시)' },
         5: { reqLv: 36, stone: '불꽃의 돌' },
-        7: { reqLv: 16, stone: '없음 (레벨 조건 달성 시)' },
+        7: { reqLv: 16, stone: '없음 (레벨 달성 시)' },
         8: { reqLv: 36, stone: '물의 돌' },
         25: { reqLv: 20, stone: '천둥의 돌' }
     }[p.id] || { reqLv: 99, stone: '최종 진화 완료' };
