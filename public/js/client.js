@@ -2,6 +2,7 @@ let ws;
 let currentNickname = '';
 let currentUserData = null;
 let selectedBallType = 'poke';
+let inBattleState = false;
 
 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const wsUrl = `${protocol}//${window.location.host}`;
@@ -44,11 +45,13 @@ function initWebSocket(starterId) {
 
         if (data.type === 'WILD_SPAWN') {
             currentUserData = data.user;
+            inBattleState = true;
             updateUI(data.user);
             
+            // 전투 시 야생 포켓몬 스탯 및 이미지 표시
+            document.getElementById('enemy-hp-card').classList.remove('invisible');
             const pImg = document.getElementById('pokemon-img');
             pImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${data.wild.id}.png`;
-            pImg.classList.remove('opacity-30', 'brightness-0');
 
             document.getElementById('pokemon-name').innerText = `${data.wild.isShiny ? '✨' : ''}${data.wild.name}`;
             document.getElementById('pokemon-level').innerText = `Lv.${data.wild.level}`;
@@ -64,7 +67,6 @@ function initWebSocket(starterId) {
                 updatePartnerHpUI(data.partnerHp, data.partnerMaxHp);
             }
 
-            // 시각적 공격 반응 애니메이션
             const img = document.getElementById('pokemon-img');
             img.classList.add('translate-x-2');
             setTimeout(() => img.classList.remove('translate-x-2'), 150);
@@ -73,18 +75,18 @@ function initWebSocket(starterId) {
         }
 
         if (data.type === 'BATTLE_END') {
-            toggleBattleButtons(false);
+            inBattleState = false;
             currentUserData = data.user;
+            toggleBattleButtons(false);
             updateUI(data.user);
             if (data.msg) setMessage(data.msg);
         }
 
         if (data.type === 'CATCH_SUCCESS') {
             playPokeballAnim(() => {
-                const img = document.getElementById('pokemon-img');
-                img.classList.add('brightness-0', 'opacity-30');
-                toggleBattleButtons(false);
+                inBattleState = false;
                 currentUserData = data.user;
+                toggleBattleButtons(false);
                 updateUI(data.user);
                 if (data.msg) setMessage(data.msg);
             });
@@ -144,16 +146,20 @@ function updateUI(user) {
     document.getElementById('partner-name').innerText = p.name;
     document.getElementById('partner-level').innerText = `Lv.${p.level}`;
     document.getElementById('btn-skill-text').innerText = p.skillName || '스킬';
+    
     updatePartnerHpUI(p.hp, p.stats.maxHp);
+    updatePartnerExpUI(p.exp, p.maxExp);
 
     document.getElementById('count-poke').innerText = user.balls.poke || 0;
     document.getElementById('count-super').innerText = user.balls.super || 0;
     document.getElementById('count-hyper').innerText = user.balls.hyper || 0;
 
-    if (user.location === '마을') {
-        toggleBattleButtons(false);
+    // 평상시(비전투): 메인 중앙에 내 파트너 포켓몬 표시
+    if (!inBattleState) {
+        document.getElementById('enemy-hp-card').classList.add('invisible');
         const img = document.getElementById('pokemon-img');
-        img.classList.add('opacity-30');
+        img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`;
+        toggleBattleButtons(false);
     }
 }
 
@@ -171,8 +177,13 @@ function updateWildHpUI(hp, maxHp) {
 function updatePartnerHpUI(hp, maxHp) {
     document.getElementById('partner-hp-text').innerText = `${hp} / ${maxHp}`;
     const pct = Math.max(0, (hp / maxHp) * 100);
-    const hpBar = document.getElementById('partner-hp-bar');
-    hpBar.style.width = `${pct}%`;
+    document.getElementById('partner-hp-bar').style.width = `${pct}%`;
+}
+
+function updatePartnerExpUI(exp, maxExp) {
+    const pct = Math.floor(Math.max(0, (exp / maxExp) * 100));
+    document.getElementById('partner-exp-text').innerText = `EXP ${pct}%`;
+    document.getElementById('partner-exp-bar').style.width = `${pct}%`;
 }
 
 function toggleBattleButtons(inBattle) {
@@ -248,7 +259,7 @@ function renderPokedexGrid(caughtList) {
         grid.innerHTML = `
             <div class="col-span-full flex flex-col items-center justify-center p-8 text-slate-500">
                 <i class="fa-solid fa-box-open text-4xl mb-3 opacity-50"></i>
-                <p class="text-sm">포획한 포켓몬이 없습니다.</p>
+                <p class="text-sm">포획한 야생 포켓몬이 없습니다.</p>
             </div>
         `;
         return;
@@ -289,7 +300,7 @@ function closeModal(id) {
     document.getElementById(id).classList.add('hidden');
 }
 
-// 버튼 액션 바인딩
+// 전투 버튼 핸들러
 document.getElementById('btn-explore').addEventListener('click', () => ws.send(JSON.stringify({ type: 'EXPLORE_FIELD' })));
 document.getElementById('btn-attack').addEventListener('click', () => ws.send(JSON.stringify({ type: 'BATTLE_ACTION', action: 'ATTACK' })));
 document.getElementById('btn-skill').addEventListener('click', () => ws.send(JSON.stringify({ type: 'BATTLE_ACTION', action: 'SKILL' })));
@@ -297,6 +308,7 @@ document.getElementById('btn-defend').addEventListener('click', () => ws.send(JS
 document.getElementById('btn-catch').addEventListener('click', () => ws.send(JSON.stringify({ type: 'CATCH_ATTEMPT', ballType: selectedBallType })));
 document.getElementById('btn-run').addEventListener('click', () => ws.send(JSON.stringify({ type: 'BATTLE_ACTION', action: 'RUN' })));
 
+// 시설 모달 버튼
 document.getElementById('btn-boss').addEventListener('click', () => ws.send(JSON.stringify({ type: 'CHALLENGE_BOSS' })));
 document.getElementById('btn-open-zone').addEventListener('click', () => {
     ws.send(JSON.stringify({ type: 'REQ_ZONE_INFO' }));
@@ -317,7 +329,23 @@ document.getElementById('btn-open-heal').addEventListener('click', () => {
     document.getElementById('heal-cost-val').innerText = healCost.toLocaleString();
     document.getElementById('heal-modal').classList.remove('hidden');
 });
-document.getElementById('btn-open-evolve').addEventListener('click', () => document.getElementById('evolve-modal').classList.remove('hidden'));
+document.getElementById('btn-open-evolve').addEventListener('click', () => {
+    if (!currentUserData) return;
+    const p = currentUserData.partner;
+    const evoInfo = {
+        1: { reqLv: 16, stone: '없음 (레벨 조건 달성 시)' },
+        2: { reqLv: 32, stone: '리프의 돌' },
+        4: { reqLv: 16, stone: '없음 (레벨 조건 달성 시)' },
+        5: { reqLv: 36, stone: '불꽃의 돌' },
+        7: { reqLv: 16, stone: '없음 (레벨 조건 달성 시)' },
+        8: { reqLv: 36, stone: '물의 돌' },
+        25: { reqLv: 20, stone: '천둥의 돌' }
+    }[p.id] || { reqLv: 99, stone: '최종 진화 완료' };
+
+    document.getElementById('evolve-req-level').innerText = `Lv.${evoInfo.reqLv}`;
+    document.getElementById('evolve-stone-name').innerText = evoInfo.stone;
+    document.getElementById('evolve-modal').classList.remove('hidden');
+});
 
 document.getElementById('btn-confirm-train').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'TRAIN' })); closeModal('train-modal'); });
 document.getElementById('btn-confirm-heal').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'HEAL' })); closeModal('heal-modal'); });
