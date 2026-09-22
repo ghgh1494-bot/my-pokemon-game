@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포켓몬 온라인 게임</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 로그인 모달 -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h2>트레이너 접속</h2>
+            <input type="text" id="nickname-input" placeholder="닉네임 입력..." maxlength="10">
+            <button id="btn-login">접속하기</button>
+        </div>
+    </div>
+
+    <div class="container hidden" id="game-container">
+        <header>
+            <h1>🎮 POKÉMON ONLINE</h1>
+            <div id="user-info">
+                <span id="gold-display">골드: 0G</span>
+                <span id="location-display">위치: 마을</span>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <!-- 좌측: 접속 중인 트레이너 목록 -->
+            <aside class="sidebar">
+                <h3>접속 트레이너</h3>
+                <ul id="trainer-list"></ul>
+            </aside>
+
+            <!-- 중앙: 게임 메인 필드 -->
+            <main class="game-view">
+                <!-- 파트너 포켓몬 정보 -->
+                <div class="card" id="partner-card">
+                    <h3>내 파트너 포켓몬</h3>
+                    <div class="partner-info">
+                        <span id="partner-name">파이리</span>
+                        <span id="partner-level">Lv. 5</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <label>HP</label>
+                        <div class="progress-bar"><div id="hp-bar" style="width: 100%;"></div></div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <label>EXP</label>
+                        <div class="progress-bar"><div id="exp-bar" style="width: 0%;"></div></div>
+                    </div>
+                    <div class="stats-grid">
+                        <div>피로도: <span id="fatigue-val">0</span>%</div>
+                        <div>친밀도: <span id="affinity-val">10</span>%</div>
+                    </div>
+                </div>
+
+                <!-- 야생 전투 영역 -->
+                <div class="card hidden" id="wild-card">
+                    <h3 id="wild-title">야생 포켓몬 출현!</h3>
+                    <div class="progress-bar-container">
+                        <label>야생 HP</label>
+                        <div class="progress-bar"><div id="wild-hp-bar" style="width: 100%;"></div></div>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="btn-attack">공격하기</button>
+                        <button id="btn-catch">몬스터볼 던지기</button>
+                    </div>
+                </div>
+
+                <!-- 마을 행동 버튼 -->
+                <div class="card" id="town-card">
+                    <h3>마을 시설</h3>
+                    <div class="action-buttons">
+                        <button id="btn-explore">야생 필드 탐험</button>
+                        <button id="btn-train">훈련소 (레벨업)</button>
+                        <button id="btn-heal">포켓몬 센터 (회복)</button>
+                        <button id="btn-evolve">진화 시도</button>
+                    </div>
+                </div>
+
+                <!-- 이벤트 로그 -->
+                <div class="card" id="log-card">
+                    <div id="game-log"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/client.js"></script>
+</body>
+</html>

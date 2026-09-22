@@ -1,0 +1,13 @@
+{
+  "name": "pokemon-game-server",
+  "version": "1.0.0",
+  "description": "Real-time Pokemon Web Game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.13.0"
+  }
+}
