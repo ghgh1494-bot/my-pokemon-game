@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// 포켓몬 DB
+// 포켓몬 데이터베이스
 const POKEMON_DB = {
     1:  { name: '이상해씨', type: 'grass', baseCatchRate: 45, stage: 1, nextEvo: 2, reqStone: '리프의 돌', baseStats: { hp: 45, atk: 49, def: 49, spAtk: 65, spDef: 65, spd: 45 } },
     2:  { name: '이상해풀', type: 'grass', baseCatchRate: 20, stage: 2, nextEvo: 3, reqStone: '리프의 돌', baseStats: { hp: 60, atk: 62, def: 63, spAtk: 80, spDef: 80, spd: 60 } },
@@ -23,10 +23,25 @@ const POKEMON_DB = {
     7:  { name: '꼬부기',   type: 'water', baseCatchRate: 45, stage: 1, nextEvo: 8, reqStone: '물의 돌', baseStats: { hp: 44, atk: 48, def: 65, spAtk: 50, spDef: 64, spd: 43 } },
     8:  { name: '어니부기', type: 'water', baseCatchRate: 20, stage: 2, nextEvo: 9, reqStone: '물의 돌', baseStats: { hp: 59, atk: 63, def: 80, spAtk: 65, spDef: 80, spd: 58 } },
     9:  { name: '거북왕',   type: 'water', baseCatchRate: 5,  stage: 3, nextEvo: null, reqStone: null, baseStats: { hp: 79, atk: 83, def: 100, spAtk: 85, spDef: 105, spd: 78 } },
+    16: { name: '구구',     type: 'normal', baseCatchRate: 50, stage: 1, nextEvo: 17, reqStone: null, baseStats: { hp: 40, atk: 45, def: 40, spAtk: 35, spDef: 35, spd: 56 } },
+    17: { name: '피전트',   type: 'normal', baseCatchRate: 30, stage: 2, nextEvo: 18, reqStone: null, baseStats: { hp: 63, atk: 60, def: 55, spAtk: 50, spDef: 50, spd: 71 } },
+    18: { name: '피죤투',   type: 'normal', baseCatchRate: 15, stage: 3, nextEvo: null, reqStone: null, baseStats: { hp: 83, atk: 80, def: 75, spAtk: 70, spDef: 70, spd: 101 } },
+    19: { name: '꼬렛',     type: 'normal', baseCatchRate: 50, stage: 1, nextEvo: null, reqStone: null, baseStats: { hp: 30, atk: 56, def: 35, spAtk: 25, spDef: 35, spd: 72 } },
     25: { name: '피카츄',   type: 'electric', baseCatchRate: 40, stage: 1, nextEvo: 26, reqStone: '천둥의 돌', baseStats: { hp: 35, atk: 55, def: 40, spAtk: 50, spDef: 50, spd: 90 } },
-    26: { name: '라이츄',   type: 'electric', baseCatchRate: 10, stage: 2, nextEvo: null, reqStone: null, baseStats: { hp: 60, atk: 90, def: 55, spAtk: 90, spDef: 80, spd: 110 } }
+    26: { name: '라이츄',   type: 'electric', baseCatchRate: 10, stage: 2, nextEvo: null, reqStone: null, baseStats: { hp: 60, atk: 90, def: 55, spAtk: 90, spDef: 80, spd: 110 } },
+    41: { name: '주뱃',     type: 'poison', baseCatchRate: 45, stage: 1, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 45, def: 35, spAtk: 30, spDef: 40, spd: 55 } },
+    79: { name: '야돈',     type: 'water', baseCatchRate: 40, stage: 1, nextEvo: null, reqStone: null, baseStats: { hp: 90, atk: 65, def: 65, spAtk: 40, spDef: 40, spd: 15 } }
 };
 
+// 🗺️ 포켓몬 골드 기반 지역(필드) 및 보스 정의
+const ZONES = {
+    1: { id: 1, name: '29번 도로 (연두마을 근처)', minLevel: 2, maxLevel: 5, pool: [16, 19], bossId: 17, bossLevel: 7, bossName: '실버의 피전트', nextZoneId: 2 },
+    2: { id: 2, name: '30번 도로 & 어둠의 동굴', minLevel: 6, maxLevel: 9, pool: [16, 19, 41], bossId: 41, bossLevel: 10, bossName: '동굴의 왕 주뱃', nextZoneId: 3 },
+    3: { id: 3, name: '모구리탑 & 도라지체육관', minLevel: 10, maxLevel: 13, pool: [16, 19, 25, 41], bossId: 18, bossLevel: 14, bossName: '체육관 관장 비상 (피죤투)', nextZoneId: 4 },
+    4: { id: 4, name: '야돈의 우물 & 고동마을', minLevel: 14, maxLevel: 18, pool: [41, 79, 25], bossId: 79, bossLevel: 20, bossName: '우물의 수호자 거대 야돈', nextZoneId: null }
+};
+
+const DROP_ITEMS = ['몬스터볼', '슈퍼볼', '하이퍼볼', '상처약'];
 const USERS = {};
 
 function calculateStats(pokemonId, level) {
@@ -44,22 +59,33 @@ function calculatePower(stats, level) {
     return Math.floor((stats.atk + stats.spAtk + stats.spd) * (level * 0.8) + (stats.def + stats.spDef));
 }
 
-function calculateCatchProbability(ballType, wildMon, partnerPower) {
-    const ballRates = { poke: 1.0, super: 1.5, hyper: 2.0, master: 255.0 };
+function calculateCatchProbability(ballType, wildMon, partnerMon) {
+    if (ballType === 'master') return 100.0;
+    const ballRates = { poke: 1.0, super: 1.5, hyper: 2.0 };
     const ballBonus = ballRates[ballType] || 1.0;
-    const hpFactor = (3 * wildMon.maxHp - 2 * wildMon.hp) / (3 * wildMon.maxHp);
 
+    const hpRatio = wildMon.hp / wildMon.maxHp;
+    const hpBonus = 1.0 + (1.0 - hpRatio) * 2.0;
+
+    const partnerPower = calculatePower(partnerMon.stats, partnerMon.level);
     const wildPower = calculatePower(wildMon.stats, wildMon.level);
-    let levelBonus = partnerPower >= wildPower 
-        ? Math.min(1.3, 1.0 + (partnerPower - wildPower) / 2000)
-        : Math.max(0.5, 1.0 - (wildPower - partnerPower) / 1000);
+    
+    let levelBonus = 1.0;
+    if (partnerPower >= wildPower) {
+        const powerDiff = partnerPower - wildPower;
+        levelBonus = 1.2 + Math.min(1.3, powerDiff / 100);
+    } else {
+        const powerDiff = wildPower - partnerPower;
+        levelBonus = Math.max(0.5, 1.0 - (powerDiff / 200));
+    }
 
-    const catchRatePercent = hpFactor * wildMon.baseCatchRate * ballBonus * levelBonus;
-    return Math.min(100, Math.max(1, catchRatePercent));
+    const baseRate = wildMon.baseCatchRate;
+    let finalProbability = (baseRate / 100) * hpBonus * ballBonus * levelBonus * 100;
+    return Math.min(100.0, Math.max(1.0, finalProbability));
 }
 
-function getTrainingCost(level) {
-    return Math.floor(10000 * Math.pow(level, 1.5));
+function checkNeedsHeal(user) {
+    return user.partner.hp <= 0 || user.partner.fatigue >= 100;
 }
 
 wss.on('connection', (ws) => {
@@ -71,19 +97,23 @@ wss.on('connection', (ws) => {
 
             if (data.type === 'INIT') {
                 userId = data.nickname;
+                const starterId = POKEMON_DB[data.starterId] ? data.starterId : 4;
+
                 if (!USERS[userId]) {
-                    const defaultStats = calculateStats(4, 5);
+                    const defaultStats = calculateStats(starterId, 1);
                     USERS[userId] = {
                         nickname: userId,
-                        gold: 10000,
-                        balls: { poke: 5, super: 0, hyper: 0, master: 0 },
-                        inventory: { '불꽃의 돌': 1, '물의 돌': 0, '리프의 돌': 0, '천둥의 돌': 0 },
+                        gold: 5000,
+                        currentZone: 1,
+                        unlockedZones: [1],
+                        balls: { poke: 10, super: 0, hyper: 0, master: 0 },
+                        inventory: { '불꽃의 돌': 1, '물의 돌': 1, '리프의 돌': 1, '천둥의 돌': 1 },
                         partner: {
-                            id: 4,
-                            name: '파이리',
-                            level: 5,
+                            id: starterId,
+                            name: POKEMON_DB[starterId].name,
+                            level: 1,
                             exp: 0,
-                            maxExp: 100,
+                            maxExp: 50,
                             hp: defaultStats.maxHp,
                             maxHp: defaultStats.maxHp,
                             fatigue: 0,
@@ -95,17 +125,50 @@ wss.on('connection', (ws) => {
                         activeWild: null
                     };
                 }
-                ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: USERS[userId] }));
+                const user = USERS[userId];
+                user.currentZoneName = ZONES[user.currentZone].name;
+                ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user }));
                 broadcastUserList();
             }
 
+            const user = USERS[userId];
+            if (!user) return;
+
+            if (data.type === 'REQ_ZONE_INFO') {
+                ws.send(JSON.stringify({
+                    type: 'ZONE_INFO',
+                    zones: Object.values(ZONES),
+                    unlockedZones: user.unlockedZones,
+                    currentZone: user.currentZone
+                }));
+            }
+
+            if (data.type === 'CHANGE_ZONE') {
+                const targetZoneId = parseInt(data.zoneId);
+                if (user.unlockedZones.includes(targetZoneId)) {
+                    user.currentZone = targetZoneId;
+                    user.currentZoneName = ZONES[targetZoneId].name;
+                    user.location = '마을';
+                    user.activeWild = null;
+                    ws.send(JSON.stringify({
+                        type: 'STATE_UPDATE',
+                        user: user,
+                        msg: `🗺️ [${user.currentZoneName}](으)로 이동했습니다.`
+                    }));
+                }
+            }
+
             if (data.type === 'EXPLORE_FIELD') {
-                const user = USERS[userId];
+                if (checkNeedsHeal(user)) {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없거나 지쳤습니다! 포켓몬 센터에서 치료하세요.' }));
+                    return;
+                }
+
                 user.location = '필드';
-                const wildPool = [1, 4, 7, 25];
-                const wildId = wildPool[Math.floor(Math.random() * wildPool.length)];
+                const zone = ZONES[user.currentZone];
+                const wildId = zone.pool[Math.floor(Math.random() * zone.pool.length)];
                 const isShiny = Math.random() < (1 / 4096);
-                const wildLevel = Math.max(1, user.partner.level + Math.floor(Math.random() * 5) - 2);
+                const wildLevel = Math.floor(Math.random() * (zone.maxLevel - zone.minLevel + 1)) + zone.minLevel;
                 const wildStats = calculateStats(wildId, wildLevel);
 
                 user.activeWild = {
@@ -116,53 +179,180 @@ wss.on('connection', (ws) => {
                     maxHp: wildStats.maxHp,
                     baseCatchRate: POKEMON_DB[wildId].baseCatchRate,
                     isShiny: isShiny,
+                    isBoss: false,
                     stats: wildStats
                 };
 
                 ws.send(JSON.stringify({
                     type: 'WILD_SPAWN',
                     wild: user.activeWild,
+                    isBoss: false,
                     user: user,
-                    msg: `야생의 ${isShiny ? '✨이로치 ' : ''}${user.activeWild.name}이(가) 나타났다!`
+                    msg: `야생의 ${isShiny ? '✨' : ''}${user.activeWild.name}(Lv.${wildLevel})이(가) 나타났다!`
                 }));
-                broadcastUserList();
+            }
+
+            if (data.type === 'CHALLENGE_BOSS') {
+                if (checkNeedsHeal(user)) {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없거나 지쳤습니다! 센터에서 치료 후 보스에 도전하세요.' }));
+                    return;
+                }
+
+                const zone = ZONES[user.currentZone];
+                user.location = '보스전';
+                const bossStats = calculateStats(zone.bossId, zone.bossLevel);
+                bossStats.maxHp = Math.floor(bossStats.maxHp * 1.5);
+
+                user.activeWild = {
+                    id: zone.bossId,
+                    name: zone.bossName,
+                    level: zone.bossLevel,
+                    hp: bossStats.maxHp,
+                    maxHp: bossStats.maxHp,
+                    baseCatchRate: 0,
+                    isShiny: false,
+                    isBoss: true,
+                    stats: bossStats
+                };
+
+                ws.send(JSON.stringify({
+                    type: 'WILD_SPAWN',
+                    wild: user.activeWild,
+                    isBoss: true,
+                    user: user,
+                    msg: `🔥 [보스전 개시] ${zone.name}의 보스 [${zone.bossName}](Lv.${zone.bossLevel})이(가) 나타났습니다!`
+                }));
             }
 
             if (data.type === 'ATTACK_WILD') {
-                const user = USERS[userId];
                 if (!user.activeWild) return;
-                const damage = Math.floor(user.activeWild.maxHp * 0.35); 
-                user.activeWild.hp = Math.max(1, user.activeWild.hp - damage);
+                if (checkNeedsHeal(user)) {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 포켓몬이 전투 불능 상태입니다. 센터에서 치료하세요!' }));
+                    return;
+                }
+
+                // 1. 플레이어 공격
+                const playerAtk = user.partner.stats.atk;
+                const wildDef = user.activeWild.stats.def;
+                const damageToWild = Math.max(5, Math.floor((playerAtk * 1.5) - (wildDef * 0.5)));
+                user.activeWild.hp -= damageToWild;
+
+                user.partner.fatigue = Math.min(100, user.partner.fatigue + 5);
+
+                // 처치 승리 시
+                if (user.activeWild.hp <= 0) {
+                    user.activeWild.hp = 0;
+                    const isBoss = user.activeWild.isBoss;
+                    const currentZoneObj = ZONES[user.currentZone];
+
+                    const rewardGold = user.activeWild.level * (isBoss ? 1000 : 350);
+                    const rewardExp = user.activeWild.level * (isBoss ? 100 : 25);
+                    user.gold += rewardGold;
+                    user.partner.exp += rewardExp;
+
+                    let dropMsg = '';
+                    if (!isBoss && Math.random() < 0.4) {
+                        const droppedItem = DROP_ITEMS[Math.floor(Math.random() * DROP_ITEMS.length)];
+                        if (droppedItem.includes('볼')) {
+                            const ballKey = droppedItem === '몬스터볼' ? 'poke' : (droppedItem === '슈퍼볼' ? 'super' : 'hyper');
+                            user.balls[ballKey] = (user.balls[ballKey] || 0) + 1;
+                        } else {
+                            user.inventory[droppedItem] = (user.inventory[droppedItem] || 0) + 1;
+                        }
+                        dropMsg = ` 🎁 [${droppedItem}] 획득!`;
+                    }
+
+                    let unlockMsg = '';
+                    if (isBoss && currentZoneObj.nextZoneId) {
+                        if (!user.unlockedZones.includes(currentZoneObj.nextZoneId)) {
+                            user.unlockedZones.push(currentZoneObj.nextZoneId);
+                            unlockMsg = ` 🎊 축하합니다! 다음 지역 [${ZONES[currentZoneObj.nextZoneId].name}]이(가) 해금되었습니다!`;
+                        }
+                    }
+
+                    // 레벨업 체크
+                    let levelUpMsg = '';
+                    if (user.partner.exp >= user.partner.maxExp) {
+                        user.partner.level += 1;
+                        user.partner.exp -= user.partner.maxExp;
+                        user.partner.maxExp = Math.floor(user.partner.maxExp * 1.25);
+                        user.partner.stats = calculateStats(user.partner.id, user.partner.level);
+                        user.partner.hp = user.partner.stats.maxHp;
+                        levelUpMsg = ` 🎉 레벨 업! (Lv.${user.partner.level})`;
+                    }
+
+                    const wildName = user.activeWild.name;
+                    user.activeWild = null;
+
+                    if (user.partner.fatigue >= 100) {
+                        user.location = '마을';
+                        ws.send(JSON.stringify({
+                            type: 'BATTLE_END',
+                            user: user,
+                            msg: `💥 ${wildName} 처치 성공! (+${rewardGold}G, +${rewardExp}EXP)${dropMsg}${unlockMsg}${levelUpMsg}\n⚠️ 파트너의 피로도가 100%가 되어 마을로 복귀했습니다.`
+                        }));
+                    } else {
+                        ws.send(JSON.stringify({
+                            type: 'BATTLE_END',
+                            user: user,
+                            msg: `💥 ${wildName} 처치 성공! (+${rewardGold}G, +${rewardExp}EXP)${dropMsg}${unlockMsg}${levelUpMsg}`
+                        }));
+                    }
+                    broadcastUserList();
+                    return;
+                }
+
+                // 2. 야생/보스 반격
+                const wildAtk = user.activeWild.stats.atk;
+                const playerDef = user.partner.stats.def;
+                const damageToPlayer = Math.max(3, Math.floor((wildAtk * 1.2) - (playerDef * 0.6)));
+                user.partner.hp -= damageToPlayer;
+
+                if (user.partner.hp <= 0) {
+                    user.partner.hp = 0;
+                    user.location = '마을';
+                    user.activeWild = null;
+
+                    ws.send(JSON.stringify({
+                        type: 'BATTLE_END',
+                        user: user,
+                        msg: `💀 ${user.partner.name}이(가) 상대의 공격(${damageToPlayer} 피해)을 받고 기절했습니다! 마을로 복귀합니다.`
+                    }));
+                    broadcastUserList();
+                    return;
+                }
 
                 ws.send(JSON.stringify({
                     type: 'WILD_HP_UPDATE',
                     wildHp: user.activeWild.hp,
                     wildMaxHp: user.activeWild.maxHp,
-                    msg: `${user.partner.name}의 공격! 야생 ${user.activeWild.name}의 체력이 감소했다!`
+                    partnerHp: user.partner.hp,
+                    partnerMaxHp: user.partner.stats.maxHp,
+                    msg: `⚔️ 내 공격: ${damageToWild} 데미지 | 🛡️ 상대 반격: ${damageToPlayer} 데미지`
                 }));
             }
 
             if (data.type === 'CATCH_ATTEMPT') {
-                const user = USERS[userId];
-                const ballType = data.ballType;
                 if (!user.activeWild) return;
+                if (user.activeWild.isBoss) {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 보스 포켓몬은 포획할 수 없습니다!' }));
+                    return;
+                }
+
+                const ballType = data.ballType;
                 if (user.balls[ballType] <= 0) {
                     ws.send(JSON.stringify({ type: 'LOG', msg: '선택한 몬스터볼이 부족합니다!' }));
                     return;
                 }
 
                 user.balls[ballType] -= 1;
-                const partnerPower = calculatePower(user.partner.stats, user.partner.level);
-                const catchChance = calculateCatchProbability(ballType, user.activeWild, partnerPower);
+                const catchChance = calculateCatchProbability(ballType, user.activeWild, user.partner);
                 const isCaught = (Math.random() * 100) < catchChance;
 
                 if (isCaught) {
                     const caught = user.activeWild;
                     if (caught.isShiny && !user.partner.isShiny) {
                         user.partner.isShiny = true;
-                        user.partner.affinity = 0.0;
-                    } else {
-                        user.partner.affinity = Math.min(100, user.partner.affinity + 0.5);
                     }
                     user.activeWild = null;
                     user.location = '마을';
@@ -182,17 +372,16 @@ wss.on('connection', (ws) => {
             }
 
             if (data.type === 'TRAIN') {
-                const user = USERS[userId];
-                const cost = getTrainingCost(user.partner.level);
-                if (user.partner.fatigue >= 100) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '포켓몬이 지쳤습니다! 센터에서 치료하세요.' }));
+                if (checkNeedsHeal(user)) {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 포켓몬의 체력이 없거나 지쳤습니다! 센터에서 치료받으세요.' }));
                     return;
                 }
+
+                const cost = Math.floor(1000 * Math.pow(user.partner.level, 1.2));
                 if (user.gold >= cost) {
                     user.gold -= cost;
-                    user.partner.exp += 35;
+                    user.partner.exp += 25;
                     user.partner.fatigue = Math.min(100, user.partner.fatigue + 15);
-                    user.partner.affinity = Math.min(100, user.partner.affinity + 0.2);
 
                     if (user.partner.exp >= user.partner.maxExp) {
                         user.partner.level += 1;
@@ -201,28 +390,36 @@ wss.on('connection', (ws) => {
                         user.partner.stats = calculateStats(user.partner.id, user.partner.level);
                         user.partner.hp = user.partner.stats.maxHp;
                     }
-                    ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: `훈련 완료! (-${cost.toLocaleString()}G)` }));
+                    ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: `🏋️ 훈련 완료! (-${cost.toLocaleString()}G)` }));
                 } else {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: `골드가 부족합니다! (필요: ${cost.toLocaleString()}G)` }));
+                    ws.send(JSON.stringify({ type: 'LOG', msg: `골드가 부족합니다!` }));
                 }
             }
 
             if (data.type === 'HEAL') {
-                const user = USERS[userId];
-                user.partner.hp = user.partner.stats.maxHp;
-                user.partner.fatigue = 0;
-                ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: '🏥 포켓몬이 치료되었습니다.' }));
+                const healCost = (user.partner.stats.maxHp - user.partner.hp) * 10 + (user.partner.fatigue * 5);
+                if (user.gold >= healCost) {
+                    user.gold -= healCost;
+                    user.partner.hp = user.partner.stats.maxHp;
+                    user.partner.fatigue = 0;
+                    ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: `🏥 완치되었습니다!` }));
+                } else {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '치료 골드가 부족합니다.' }));
+                }
             }
 
             if (data.type === 'EVOLVE') {
-                const user = USERS[userId];
-                const pInfo = POKEMON_DB[user.partner.id];
+                if (checkNeedsHeal(user)) {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 기절/지친 상태에서는 진화할 수 없습니다.' }));
+                    return;
+                }
 
+                const pInfo = POKEMON_DB[user.partner.id];
                 if (!pInfo.nextEvo) {
                     ws.send(JSON.stringify({ type: 'LOG', msg: '이미 최종 진화 상태입니다.' }));
                     return;
                 }
-                if (user.inventory[pInfo.reqStone] <= 0) {
+                if ((user.inventory[pInfo.reqStone] || 0) <= 0) {
                     ws.send(JSON.stringify({ type: 'LOG', msg: `진화에 [${pInfo.reqStone}]이 필요합니다.` }));
                     return;
                 }
@@ -230,21 +427,20 @@ wss.on('connection', (ws) => {
                 user.inventory[pInfo.reqStone] -= 1;
                 user.partner.id = pInfo.nextEvo;
                 user.partner.name = POKEMON_DB[pInfo.nextEvo].name;
-                user.partner.affinity = Math.max(0, user.partner.affinity * 0.7);
                 user.partner.stats = calculateStats(user.partner.id, user.partner.level);
                 user.partner.hp = user.partner.stats.maxHp;
 
                 ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: `✨ [${user.partner.name}](으)로 진화했습니다!` }));
             }
         } catch (err) {
-            console.error('Error handling message:', err);
+            console.error(err);
         }
     });
 
     function broadcastUserList() {
         const list = Object.values(USERS).map(u => ({
             nickname: u.nickname,
-            location: u.location,
+            zoneName: u.currentZoneName || '연두마을',
             power: calculatePower(u.partner.stats, u.partner.level)
         }));
         wss.clients.forEach(client => {
