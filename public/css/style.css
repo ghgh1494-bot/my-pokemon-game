@@ -28,6 +28,17 @@ header {
     margin-bottom: 20px;
 }
 
+/* 배틀 모션 애니메이션 (좌하단 <-> 우상단 동일 규격 상호작용) */
+.anim-partner-atk {
+    transform: translate(50px, -50px) !important;
+}
+.anim-enemy-atk {
+    transform: translate(-50px, 50px) !important;
+}
+.damage-flash {
+    filter: brightness(2.5) sepia(1) hue-rotate(-50deg) saturate(5) !important;
+}
+
 #user-info span {
     margin-left: 15px;
     font-weight: bold;
