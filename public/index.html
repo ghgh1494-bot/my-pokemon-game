@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>포켓몬 포획 어드벤처</title>
+    <title>포켓몬 온라인 - 어드벤처</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -18,10 +18,9 @@
         .font-game {
             font-family: 'Jua', sans-serif;
         }
-        /* Custom Uniform Button System */
         .btn-ui {
             height: 48px;
-            padding: 0 20px;
+            padding: 0 16px;
             font-weight: 700;
             border-radius: 12px;
             display: inline-flex;
@@ -29,9 +28,9 @@
             justify-content: center;
             gap: 8px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
             border: 2px solid rgba(255, 255, 255, 0.15);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             cursor: pointer;
             white-space: nowrap;
         }
@@ -41,206 +40,249 @@
         }
         .btn-ui:active {
             transform: translateY(1px);
-            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.3);
         }
         .btn-primary { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
-        .btn-primary:hover { background: linear-gradient(135deg, #f87171 0%, #ef4444 100%); }
         .btn-secondary { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; }
-        .btn-secondary:hover { background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%); }
         .btn-success { background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: white; }
-        .btn-success:hover { background: linear-gradient(135deg, #34d399 0%, #059669 100%); }
         .btn-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
-        .btn-warning:hover { background: linear-gradient(135deg, #fbbf24 0%, #ea580c 100%); }
+        .btn-purple { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: white; }
         .btn-dark { background: linear-gradient(135deg, #475569 0%, #1e293b 100%); color: white; }
-        .btn-dark:hover { background: linear-gradient(135deg, #64748b 0%, #334155 100%); }
         
         .btn-disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed !important;
             transform: none !important;
             box-shadow: none !important;
         }
 
-        /* Pokeball Throwing Animation */
         @keyframes throwBall {
-            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-            50% { transform: translate(0, -180px) scale(1.3) rotate(360deg); }
-            100% { transform: translate(0, -280px) scale(0.6) rotate(720deg); }
+            0% { transform: translate(-50%, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(-50%, -140px) scale(1.3) rotate(360deg); }
+            100% { transform: translate(-50%, -220px) scale(0.6) rotate(720deg); }
         }
         .animate-throw {
             animation: throwBall 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
 
-        /* Pokeball Shake Animation */
         @keyframes shake {
-            0%, 100% { transform: translate(0, -280px) scale(0.6) rotate(0deg); }
-            20% { transform: translate(-10px, -280px) scale(0.6) rotate(-20deg); }
-            40% { transform: translate(10px, -280px) scale(0.6) rotate(20deg); }
-            60% { transform: translate(-5px, -280px) scale(0.6) rotate(-10deg); }
-            80% { transform: translate(5px, -280px) scale(0.6) rotate(10deg); }
+            0%, 100% { transform: translate(-50%, -220px) scale(0.6) rotate(0deg); }
+            20% { transform: translate(calc(-50% - 10px), -220px) scale(0.6) rotate(-20deg); }
+            40% { transform: translate(calc(-50% + 10px), -220px) scale(0.6) rotate(20deg); }
+            60% { transform: translate(calc(-50% - 5px), -220px) scale(0.6) rotate(-10deg); }
+            80% { transform: translate(calc(-50% + 5px), -220px) scale(0.6) rotate(10deg); }
         }
         .animate-shake {
             animation: shake 0.6s ease-in-out infinite;
         }
 
-        /* Modal Overlay Backdrop Blur */
         .modal-backdrop {
-            background-color: rgba(15, 23, 42, 0.8);
+            background-color: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(8px);
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1e293b;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between items-center p-3 sm:p-6 bg-slate-950 text-slate-100">
 
-    <!-- Navigation Header -->
-    <header class="w-full max-w-4xl bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-4 shadow-xl flex flex-wrap justify-between items-center gap-3 backdrop-blur-md">
+    <!-- 로그인 모달 -->
+    <div id="login-modal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
+            <h2 class="font-game text-2xl text-amber-400 mb-2">트레이너 접속</h2>
+            <p class="text-xs text-slate-400 mb-4">닉네임을 입력하고 스타팅 포켓몬을 선택하세요!</p>
+            <input type="text" id="nickname-input" placeholder="닉네임 입력..." maxlength="10" class="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white mb-4 text-center focus:outline-none focus:border-amber-400">
+            
+            <h3 class="text-sm font-bold text-slate-300 mb-2 text-left">스타팅 포켓몬</h3>
+            <div class="grid grid-cols-2 gap-2 mb-6">
+                <label class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex items-center gap-2 cursor-pointer hover:border-emerald-500">
+                    <input type="radio" name="starter" value="1" checked>
+                    <span class="text-xs font-bold">🍃 이상해씨</span>
+                </label>
+                <label class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex items-center gap-2 cursor-pointer hover:border-red-500">
+                    <input type="radio" name="starter" value="4">
+                    <span class="text-xs font-bold">🔥 파이리</span>
+                </label>
+                <label class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex items-center gap-2 cursor-pointer hover:border-blue-500">
+                    <input type="radio" name="starter" value="7">
+                    <span class="text-xs font-bold">💧 꼬부기</span>
+                </label>
+                <label class="bg-slate-800 p-2.5 rounded-xl border border-slate-700 flex items-center gap-2 cursor-pointer hover:border-amber-500">
+                    <input type="radio" name="starter" value="25">
+                    <span class="text-xs font-bold">⚡ 피카츄</span>
+                </label>
+            </div>
+            <button id="btn-login" class="btn-ui btn-primary w-full">모험 시작하기</button>
+        </div>
+    </div>
+
+    <!-- 헤더 -->
+    <header class="w-full max-w-5xl bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-4 shadow-xl flex flex-wrap justify-between items-center gap-3 backdrop-blur-md">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center border-2 border-white shadow-md">
                 <div class="w-4 h-4 rounded-full bg-white border-2 border-slate-900"></div>
             </div>
             <div>
                 <h1 class="font-game text-xl sm:text-2xl text-amber-400 tracking-wider">포켓몬 어드벤처</h1>
-                <p class="text-xs text-slate-400">야생 포켓몬을 포획하고 도감을 완성하세요!</p>
+                <p class="text-xs text-slate-400">위치: <span id="location-display" class="text-amber-300">마을</span> | 지역: <span id="zone-display" class="text-emerald-400">연두마을</span></p>
             </div>
         </div>
         
-        <!-- Status & Pokedex Button -->
         <div class="flex items-center gap-3 ml-auto">
             <div class="bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700/60 flex items-center gap-2">
                 <i class="fa-solid fa-coins text-amber-400"></i>
-                <span id="player-gold" class="font-bold text-sm text-amber-300">1,000 P</span>
+                <span id="player-gold" class="font-bold text-sm text-amber-300">0 G</span>
             </div>
-            <button id="btn-pokedex" onclick="openPokedexModal()" class="btn-ui btn-warning text-sm">
+            <button onclick="openPokedexModal()" class="btn-ui btn-warning text-sm">
                 <i class="fa-solid fa-book-bookmark"></i>
-                <span>내 포켓몬 도감 (<span id="caught-count">0</span>)</span>
+                <span>포획 도감 (<span id="caught-count">0</span>)</span>
             </button>
         </div>
     </header>
 
-    <!-- Main Game Container -->
-    <main class="w-full max-w-4xl flex-1 flex flex-col gap-4">
+    <!-- 메인 레이아웃 -->
+    <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
         
-        <!-- Field Encounter Stage -->
-        <div class="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden border-2 border-slate-800 shadow-2xl flex flex-col justify-between p-4 bg-gradient-to-b from-sky-900/40 via-emerald-950/30 to-emerald-900/60">
+        <!-- 사이드바: 접속 트레이너 -->
+        <aside class="md:col-span-1 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
+            <h3 class="font-game text-amber-400 border-b border-slate-800 pb-2 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-users"></i> 접속 트레이너
+            </h3>
+            <ul id="trainer-list" class="space-y-1.5 text-xs overflow-y-auto max-h-48 md:max-h-full">
+                <!-- 동적 갱신 -->
+            </ul>
+        </aside>
+
+        <!-- 메인 게임 영역 -->
+        <main class="md:col-span-3 flex flex-col gap-4">
             
-            <!-- Environment Deco Background SVG Elements -->
-            <div class="absolute inset-0 pointer-events-none opacity-30">
-                <div class="absolute bottom-0 w-full h-24 bg-emerald-800/40 rounded-t-full transform scale-125"></div>
-                <div class="absolute top-10 left-10 text-slate-600/30 text-6xl"><i class="fa-solid fa-cloud"></i></div>
-                <div class="absolute top-16 right-20 text-slate-600/30 text-8xl"><i class="fa-solid fa-cloud"></i></div>
-            </div>
+            <!-- 배틀 스테이지 -->
+            <div class="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden border-2 border-slate-800 shadow-2xl flex flex-col justify-between p-4 bg-gradient-to-b from-sky-900/40 via-emerald-950/30 to-emerald-900/60">
+                
+                <div class="absolute inset-0 pointer-events-none opacity-30">
+                    <div class="absolute bottom-0 w-full h-24 bg-emerald-800/40 rounded-t-full transform scale-125"></div>
+                </div>
 
-            <!-- Top Stage Info -->
-            <div class="relative z-10 flex justify-between items-start">
-                <div class="bg-slate-900/80 backdrop-blur border border-slate-700/70 rounded-xl p-3 shadow-lg max-w-[220px] sm:max-w-xs">
-                    <div class="flex items-center gap-2">
-                        <span id="pokemon-name" class="font-game text-lg sm:text-xl text-amber-300">야생 포켓몬 찾기</span>
-                        <span id="pokemon-type" class="px-2 py-0.5 text-xs rounded-full bg-slate-700 text-slate-300">타입</span>
-                    </div>
-                    <div class="mt-2">
-                        <div class="flex justify-between text-xs mb-1">
-                            <span class="text-slate-400">HP</span>
-                            <span id="hp-text" class="text-emerald-400 font-bold">100 / 100</span>
+                <!-- 상단: 상대 포켓몬 HP -->
+                <div class="relative z-10 flex justify-between items-start">
+                    <div class="bg-slate-900/80 backdrop-blur border border-slate-700/70 rounded-xl p-3 shadow-lg max-w-[220px] sm:max-w-xs">
+                        <div class="flex items-center gap-2">
+                            <span id="pokemon-name" class="font-game text-lg sm:text-xl text-amber-300">야생 포켓몬 탐색</span>
+                            <span id="pokemon-level" class="px-2 py-0.5 text-xs rounded-full bg-slate-700 text-slate-300">Lv.-</span>
                         </div>
-                        <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
-                            <div id="hp-bar" class="bg-emerald-500 h-full w-full transition-all duration-300"></div>
+                        <div class="mt-2">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-400">상대 HP</span>
+                                <span id="hp-text" class="text-emerald-400 font-bold">0 / 0</span>
+                            </div>
+                            <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
+                                <div id="hp-bar" class="bg-emerald-500 h-full w-0 transition-all duration-300"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 내 파트너 HP 정보 -->
+                    <div class="bg-slate-900/80 backdrop-blur border border-slate-700/70 rounded-xl p-3 shadow-lg max-w-[220px] sm:max-w-xs text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <span id="partner-level" class="px-2 py-0.5 text-xs rounded-full bg-slate-700 text-slate-300">Lv.1</span>
+                            <span id="partner-name" class="font-game text-lg sm:text-xl text-amber-300">파트너</span>
+                        </div>
+                        <div class="mt-2">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span id="partner-hp-text" class="text-emerald-400 font-bold">0 / 0</span>
+                                <span class="text-slate-400">내 HP</span>
+                            </div>
+                            <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
+                                <div id="partner-hp-bar" class="bg-emerald-500 h-full w-full transition-all duration-300"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Status Badge -->
-                <div id="capture-rate-badge" class="bg-slate-900/80 backdrop-blur border border-slate-700/70 rounded-xl px-3 py-2 text-center hidden">
-                    <span class="text-xs text-slate-400 block">포획 확률</span>
-                    <span id="capture-rate-text" class="font-bold text-amber-400 text-sm">50%</span>
+                <!-- 포켓몬 스프라이트 연출 영역 -->
+                <div class="relative z-10 flex-1 flex items-center justify-center my-2">
+                    <div id="pokemon-container" class="relative transition-all duration-300">
+                        <img id="pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="Pokemon" class="w-36 h-36 sm:w-44 sm:h-44 object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] opacity-30">
+                        
+                        <!-- 던져지는 몬스터볼 -->
+                        <div id="thrown-pokeball" class="hidden absolute left-1/2 bottom-0 w-12 h-12 z-20">
+                            <img id="ball-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" class="w-full h-full object-contain filter drop-shadow-md">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 게임 로그 콘솔 -->
+                <div class="relative z-10 bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-center min-h-[52px] flex items-center justify-center">
+                    <p id="game-message" class="text-xs sm:text-sm text-slate-200 font-medium">
+                        '탐색하기' 버튼을 눌러 필드에서 포켓몬을 찾아보세요!
+                    </p>
                 </div>
             </div>
 
-            <!-- Center Pokémon Display -->
-            <div class="relative z-10 flex-1 flex items-center justify-center my-2">
-                <div id="pokemon-container" class="relative transition-all duration-300 transform scale-100">
-                    <img id="pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="Pokemon" class="w-36 h-36 sm:w-48 sm:h-48 object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
-                    
-                    <!-- Pokeball Throw Visual Element -->
-                    <div id="thrown-pokeball" class="hidden absolute left-1/2 bottom-0 -translate-x-1/2 w-12 h-12 z-20">
-                        <img id="ball-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" class="w-full h-full object-contain filter drop-shadow-md">
+            <!-- 컨트롤 패널 -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                    <button id="btn-explore" class="btn-ui btn-primary">
+                        <i class="fa-solid fa-compass"></i> <span>탐색하기</span>
+                    </button>
+                    <button id="btn-attack" class="btn-ui btn-secondary btn-disabled" disabled>
+                        <i class="fa-solid fa-hand-fist"></i> <span>공격</span>
+                    </button>
+                    <button id="btn-skill" class="btn-ui btn-purple btn-disabled" disabled>
+                        <i class="fa-solid fa-bolt"></i> <span id="btn-skill-text">스킬</span>
+                    </button>
+                    <button id="btn-defend" class="btn-ui btn-dark btn-disabled" disabled>
+                        <i class="fa-solid fa-shield-halved"></i> <span>방어</span>
+                    </button>
+                    <button id="btn-catch" class="btn-ui btn-success btn-disabled" disabled>
+                        <i class="fa-solid fa-bullseye"></i> <span>볼 던지기</span>
+                    </button>
+                    <button id="btn-run" class="btn-ui btn-dark btn-disabled" disabled>
+                        <i class="fa-solid fa-person-running"></i> <span>도망치기</span>
+                    </button>
+                </div>
+
+                <!-- 볼 선택 바 -->
+                <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap justify-between items-center gap-3">
+                    <span class="text-xs text-slate-400 font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-suitcase"></i> 보관함 볼 선택:
+                    </span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button id="ball-select-poke" onclick="selectBall('poke')" class="px-3 py-1.5 rounded-lg border border-red-500 bg-red-500/20 text-xs font-bold flex items-center gap-1.5 ring-2 ring-red-500">
+                            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" class="w-4 h-4">
+                            몬스터볼 (<span id="count-poke">0</span>)
+                        </button>
+                        <button id="ball-select-super" onclick="selectBall('super')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-xs font-bold flex items-center gap-1.5">
+                            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png" class="w-4 h-4">
+                            슈퍼볼 (<span id="count-super">0</span>)
+                        </button>
+                        <button id="ball-select-hyper" onclick="selectBall('hyper')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-xs font-bold flex items-center gap-1.5">
+                            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png" class="w-4 h-4">
+                            하이퍼볼 (<span id="count-hyper">0</span>)
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Bottom Log Console -->
-            <div class="relative z-10 bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-center min-h-[52px] flex items-center justify-center">
-                <p id="game-message" class="text-xs sm:text-sm text-slate-200 font-medium">
-                    '탐색하기' 버튼을 눌러 들판에서 포켓몬을 찾아보세요!
-                </p>
-            </div>
-        </div>
-
-        <!-- Control Panel & Uniform Buttons -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <button id="btn-explore" onclick="explorePokemon()" class="btn-ui btn-primary">
-                    <i class="fa-solid fa-compass"></i>
-                    <span>탐색하기</span>
-                </button>
-                <button id="btn-attack" onclick="attackPokemon()" class="btn-ui btn-secondary btn-disabled" disabled>
-                    <i class="fa-solid fa-hand-fist"></i>
-                    <span>공격 (HP 감소)</span>
-                </button>
-                <button id="btn-bait" onclick="throwBait()" class="btn-ui btn-warning btn-disabled" disabled>
-                    <i class="fa-solid fa-apple-whole"></i>
-                    <span>먹이주기</span>
-                </button>
-                <button id="btn-catch" onclick="attemptCatch()" class="btn-ui btn-success btn-disabled" disabled>
-                    <i class="fa-solid fa-bullseye"></i>
-                    <span>볼 던지기</span>
-                </button>
-            </div>
-
-            <!-- Pokeball Selector Bar -->
-            <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap justify-between items-center gap-3">
-                <span class="text-xs text-slate-400 font-bold flex items-center gap-1">
-                    <i class="fa-solid fa-suitcase"></i> 보관함 볼 선택:
-                </span>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <button id="ball-select-poke" onclick="selectBall('poke')" class="px-3 py-1.5 rounded-lg border border-red-500 bg-red-500/20 text-xs font-bold flex items-center gap-1.5 transition-all ring-2 ring-red-500">
-                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" class="w-4 h-4">
-                        몬스터볼 (<span id="count-poke">10</span>)
-                    </button>
-                    <button id="ball-select-great" onclick="selectBall('great')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all">
-                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png" class="w-4 h-4">
-                        수퍼볼 (<span id="count-great">3</span>)
-                    </button>
-                    <button id="ball-select-ultra" onclick="selectBall('ultra')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all">
-                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png" class="w-4 h-4">
-                        하이퍼볼 (<span id="count-ultra">1</span>)
-                    </button>
+            <!-- 마을 및 탐험 시설 메뉴 -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <h3 class="font-game text-amber-400 mb-3 text-sm">🏛️ 마을 및 탐험 시설</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    <button id="btn-boss" class="btn-ui btn-primary text-xs">🔥 보스 도전</button>
+                    <button id="btn-open-zone" class="btn-ui btn-purple text-xs">🗺️ 지역 이동</button>
+                    <button id="btn-open-train" class="btn-ui btn-dark text-xs">🏋️ 훈련소</button>
+                    <button id="btn-open-heal" class="btn-ui btn-success text-xs">🏥 포켓몬 센터</button>
+                    <button id="btn-open-evolve" class="btn-ui btn-warning text-xs">✨ 진화 시도</button>
                 </div>
             </div>
-        </div>
 
-    </main>
+        </main>
+    </div>
 
-    <!-- Pokedex / Caught Pokemon Modal -->
+    <!-- 포획 도감 모달 -->
     <div id="pokedex-modal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-            
-            <!-- Modal Header -->
             <div class="bg-slate-800/90 px-5 py-4 border-b border-slate-700 flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <div class="p-2 bg-red-500/20 text-red-400 rounded-xl border border-red-500/30">
@@ -248,16 +290,15 @@
                     </div>
                     <div>
                         <h2 class="font-game text-xl text-amber-300">내 포획 포켓몬 도감</h2>
-                        <p class="text-xs text-slate-400">자신이 수집한 포켓몬 리스트를 확인하세요.</p>
+                        <p class="text-xs text-slate-400">수집한 포켓몬 리스트를 확인하세요.</p>
                     </div>
                 </div>
-                <button onclick="closePokedexModal()" class="w-9 h-9 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors">
+                <button onclick="closePokedexModal()" class="w-9 h-9 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
-            <!-- Modal Filter / Stats Bar -->
-            <div class="p-4 bg-slate-950/50 border-b border-slate-800 flex flex-wrap justify-between items-center gap-3">
+            <div class="p-4 bg-slate-950/50 border-b border-slate-800 flex justify-between items-center">
                 <div class="text-xs text-slate-300">
                     총 포획 수: <span id="modal-total-count" class="font-bold text-amber-400 text-sm">0</span> 마리
                 </div>
@@ -267,357 +308,72 @@
                 </div>
             </div>
 
-            <!-- Modal Body Grid (Caught List) -->
             <div id="pokedex-grid" class="p-4 sm:p-6 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 flex-1 min-h-[280px]">
-                <!-- Dynamic Pokemon Cards will be injected here -->
+                <!-- 동적 포켓몬 카드가 추가됩니다 -->
             </div>
 
-            <!-- Modal Footer -->
             <div class="p-4 bg-slate-800/60 border-t border-slate-700/80 flex justify-end">
-                <button onclick="closePokedexModal()" class="btn-ui btn-dark">
-                    <span>닫기</span>
-                </button>
+                <button onclick="closePokedexModal()" class="btn-ui btn-dark"><span>닫기</span></button>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="mt-6 text-center text-xs text-slate-500">
-        <p>© 2026 Pokemon Adventure Web Game. All artwork sprites belongs to Pokémon / Nintendo.</p>
-    </footer>
+    <!-- 지역 이동 모달 -->
+    <div id="zone-modal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h2 class="font-game text-xl text-amber-400 mb-2">🗺️ 지역 이동</h2>
+            <div id="zone-list" class="space-y-2 my-4 max-h-60 overflow-y-auto"></div>
+            <button onclick="closeModal('zone-modal')" class="btn-ui btn-dark w-full">닫기</button>
+        </div>
+    </div>
 
-    <script>
-        // Database of available Pokemon
-        const pokemonDatabase = [
-            { id: 25, name: "피카츄", type: "전기", hp: 90, catchRate: 0.5, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" },
-            { id: 1, name: "이상해씨", type: "풀", hp: 100, catchRate: 0.45, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" },
-            { id: 4, name: "파이리", type: "불꽃", hp: 95, catchRate: 0.45, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png" },
-            { id: 7, name: "꼬부기", type: "물", hp: 105, catchRate: 0.45, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/7.png" },
-            { id: 133, name: "이브이", type: "노멀", hp: 85, catchRate: 0.55, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/133.png" },
-            { id: 39, name: "푸린", type: "노멀", hp: 110, catchRate: 0.6, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/39.png" },
-            { id: 54, name: "고라파덕", type: "물", hp: 90, catchRate: 0.5, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/54.png" },
-            { id: 143, name: "잠만보", type: "노멀", hp: 200, catchRate: 0.25, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/143.png" },
-            { id: 150, name: "뮤츠", type: "에스퍼", hp: 250, catchRate: 0.1, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png" },
-            { id: 94, name: "팬텀", type: "고스트", hp: 120, catchRate: 0.35, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/94.png" }
-        ];
+    <!-- 훈련소 모달 -->
+    <div id="train-modal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
+            <h2 class="font-game text-xl text-amber-400 mb-2">🏋️ 훈련소</h2>
+            <p class="text-xs text-slate-400 mb-4">파트너 포켓몬을 훈련시켜 경험치를 획득합니다.</p>
+            <div class="bg-slate-800 p-4 rounded-xl text-left text-xs space-y-2 mb-4">
+                <div>필요 골드: <span id="train-cost-val" class="font-bold text-amber-400">0</span> G</div>
+                <div>보유 골드: <span id="train-user-gold" class="font-bold text-slate-200">0</span> G</div>
+            </div>
+            <div class="flex gap-2">
+                <button id="btn-confirm-train" class="btn-ui btn-success flex-1">훈련하기</button>
+                <button onclick="closeModal('train-modal')" class="btn-ui btn-dark flex-1">닫기</button>
+            </div>
+        </div>
+    </div>
 
-        // Ball Types & Multipliers
-        const ballTypes = {
-            poke: { name: "몬스터볼", bonus: 1.0, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" },
-            great: { name: "수퍼볼", bonus: 1.5, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png" },
-            ultra: { name: "하이퍼볼", bonus: 2.0, img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png" }
-        };
+    <!-- 포켓몬 센터 모달 -->
+    <div id="heal-modal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
+            <h2 class="font-game text-xl text-emerald-400 mb-2">🏥 포켓몬 센터</h2>
+            <p class="text-xs text-slate-400 mb-4">체력과 피로도를 완전히 치료합니다.</p>
+            <div class="bg-slate-800 p-4 rounded-xl text-left text-xs space-y-2 mb-4">
+                <div>현재 HP: <span id="heal-current-hp" class="font-bold text-emerald-400">0 / 0</span></div>
+                <div>치료 비용: <span id="heal-cost-val" class="font-bold text-amber-400">0</span> G</div>
+            </div>
+            <div class="flex gap-2">
+                <button id="btn-confirm-heal" class="btn-ui btn-success flex-1">치료하기</button>
+                <button onclick="closeModal('heal-modal')" class="btn-ui btn-dark flex-1">닫기</button>
+            </div>
+        </div>
+    </div>
 
-        // Game State Variables
-        let gameState = {
-            gold: 1000,
-            selectedBall: 'poke',
-            balls: { poke: 10, great: 3, ultra: 1 },
-            currentPokemon: null,
-            currentHp: 0,
-            maxHp: 0,
-            baitEffect: 1.0,
-            caughtPokemon: [],
-            isBusy: false
-        };
+    <!-- 진화 모달 -->
+    <div id="evolve-modal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
+            <h2 class="font-game text-xl text-amber-400 mb-2">✨ 진화의 성소</h2>
+            <p class="text-xs text-slate-400 mb-4">진화의 돌을 사용하여 파트너 포켓몬을 진화시킵니다.</p>
+            <div class="bg-slate-800 p-4 rounded-xl text-left text-xs space-y-2 mb-4">
+                <div>필요 아이템: <span id="evolve-stone-name" class="font-bold text-amber-400">-</span></div>
+            </div>
+            <div class="flex gap-2">
+                <button id="btn-confirm-evolve" class="btn-ui btn-warning flex-1">진화하기</button>
+                <button onclick="closeModal('evolve-modal')" class="btn-ui btn-dark flex-1">닫기</button>
+            </div>
+        </div>
+    </div>
 
-        // DOM Elements
-        const elName = document.getElementById('pokemon-name');
-        const elType = document.getElementById('pokemon-type');
-        const elHpText = document.getElementById('hp-text');
-        const elHpBar = document.getElementById('hp-bar');
-        const elImg = document.getElementById('pokemon-img');
-        const elMsg = document.getElementById('game-message');
-        const elGold = document.getElementById('player-gold');
-        const elCaughtCount = document.getElementById('caught-count');
-        const elCaptureBadge = document.getElementById('capture-rate-badge');
-        const elCaptureText = document.getElementById('capture-rate-text');
-
-        // Buttons
-        const btnExplore = document.getElementById('btn-explore');
-        const btnAttack = document.getElementById('btn-attack');
-        const btnBait = document.getElementById('btn-bait');
-        const btnCatch = document.getElementById('btn-catch');
-
-
-        // Explore & Wild Encounter
-        function explorePokemon() {
-            if (gameState.isBusy) return;
-
-            // Pick random Pokemon
-            const randomIndex = Math.floor(Math.random() * pokemonDatabase.length);
-            const template = pokemonDatabase[randomIndex];
-
-            gameState.currentPokemon = { ...template };
-            gameState.maxHp = template.hp;
-            gameState.currentHp = template.hp;
-            gameState.baitEffect = 1.0;
-
-            // Update UI
-            elName.innerText = template.name;
-            elType.innerText = template.type;
-            elImg.src = template.img;
-            elImg.classList.remove('brightness-0', 'opacity-30');
-
-            updateHpUI();
-            updateCaptureRateUI();
-
-            elCaptureBadge.classList.remove('hidden');
-            elMsg.innerText = `야생의 [${template.name}]이(가) 나타났다! 무엇을 할까?`;
-
-            // Enable Controls
-            toggleActionButtons(true);
-        }
-
-        // Calculate and Update Capture Chance UI
-        function getCalculatedCaptureRate() {
-            if (!gameState.currentPokemon) return 0;
-            const hpRatio = gameState.currentHp / gameState.maxHp;
-            const baseRate = gameState.currentPokemon.catchRate;
-            const ballBonus = ballTypes[gameState.selectedBall].bonus;
-            
-            // Formula: Lower HP -> Higher rate, Bait increases rate
-            let finalRate = (baseRate * (1 + (1 - hpRatio) * 1.2) * ballBonus * gameState.baitEffect);
-            return Math.min(0.95, Math.max(0.05, finalRate));
-        }
-
-        function updateCaptureRateUI() {
-            if (!gameState.currentPokemon) return;
-            const ratePercent = Math.round(getCalculatedCaptureRate() * 100);
-            elCaptureText.innerText = `${ratePercent}%`;
-        }
-
-        function updateHpUI() {
-            elHpText.innerText = `${gameState.currentHp} / ${gameState.maxHp}`;
-            const pct = Math.max(0, (gameState.currentHp / gameState.maxHp) * 100);
-            elHpBar.style.width = `${pct}%`;
-
-            if (pct > 50) {
-                elHpBar.className = "bg-emerald-500 h-full transition-all duration-300";
-            } else if (pct > 20) {
-                elHpBar.className = "bg-amber-500 h-full transition-all duration-300";
-            } else {
-                elHpBar.className = "bg-red-500 h-full transition-all duration-300";
-            }
-        }
-
-        // Action: Attack
-        function attackPokemon() {
-            if (!gameState.currentPokemon || gameState.isBusy) return;
-
-            const damage = Math.floor(Math.random() * 20) + 15;
-            gameState.currentHp = Math.max(0, gameState.currentHp - damage);
-
-            // Visual Shake effect
-            elImg.classList.add('translate-x-2');
-            setTimeout(() => elImg.classList.remove('translate-x-2'), 100);
-
-            updateHpUI();
-            updateCaptureRateUI();
-
-            if (gameState.currentHp <= 0) {
-                elMsg.innerText = `[${gameState.currentPokemon.name}]이(가) 쓰러졌다... (포획 실패)`;
-                resetEncounter();
-            } else {
-                elMsg.innerText = `공격 성공! [${gameState.currentPokemon.name}]에게 ${damage}의 데미지를 주었습니다.`;
-            }
-        }
-
-        // Action: Bait
-        function throwBait() {
-            if (!gameState.currentPokemon || gameState.isBusy) return;
-
-            gameState.baitEffect += 0.25;
-            updateCaptureRateUI();
-            elMsg.innerText = `맛있는 먹이를 던졌습니다! [${gameState.currentPokemon.name}]이(가) 방심하여 포획률이 상승했습니다.`;
-        }
-
-        // Action: Attempt Catch
-        function attemptCatch() {
-            if (!gameState.currentPokemon || gameState.isBusy) return;
-
-            if (gameState.balls[gameState.selectedBall] <= 0) {
-                elMsg.innerText = `${ballTypes[gameState.selectedBall].name}이(가) 부족합니다! 다른 볼을 선택하세요.`;
-                return;
-            }
-
-            // Deduct Pokeball
-            gameState.balls[gameState.selectedBall]--;
-            updateBallCounts();
-
-            gameState.isBusy = true;
-            toggleActionButtons(false);
-
-            // Animate Pokeball Throw
-            const thrownBall = document.getElementById('thrown-pokeball');
-            const ballSprite = document.getElementById('ball-sprite');
-            ballSprite.src = ballTypes[gameState.selectedBall].img;
-
-            thrownBall.classList.remove('hidden');
-            thrownBall.classList.add('animate-throw');
-
-            elMsg.innerText = `${ballTypes[gameState.selectedBall].name}을(를) 던졌다!`;
-
-            setTimeout(() => {
-                thrownBall.classList.remove('animate-throw');
-                thrownBall.classList.add('animate-shake');
-
-                // Determine Success
-                const captureChance = getCalculatedCaptureRate();
-                const roll = Math.random();
-
-                setTimeout(() => {
-                    thrownBall.classList.remove('animate-shake');
-                    thrownBall.classList.add('hidden');
-
-                    if (roll <= captureChance) {
-                        // Success!
-                        elMsg.innerText = `신난다! [${gameState.currentPokemon.name}]을(를) 잡았다!`;
-                        elImg.classList.add('brightness-0', 'opacity-30');
-
-                        // Save to inventory
-                        gameState.caughtPokemon.push({
-                            ...gameState.currentPokemon,
-                            caughtAt: new Date().toLocaleTimeString(),
-                            timestamp: Date.now()
-                        });
-
-                        // Reward Gold
-                        gameState.gold += 200;
-                        elGold.innerText = `${gameState.gold.toLocaleString()} P`;
-                        elCaughtCount.innerText = gameState.caughtPokemon.length;
-
-                        resetEncounter(true);
-                    } else {
-                        // Failed
-                        elMsg.innerText = `아깝다! [${gameState.currentPokemon.name}]이(가) 볼에서 탈출했습니다.`;
-                        gameState.isBusy = false;
-                        toggleActionButtons(true);
-                    }
-                }, 1800);
-
-            }, 800);
-        }
-
-        function resetEncounter(isCaught = false) {
-            setTimeout(() => {
-                gameState.currentPokemon = null;
-                gameState.isBusy = false;
-                elCaptureBadge.classList.add('hidden');
-                toggleActionButtons(false);
-                btnExplore.classList.remove('btn-disabled');
-                btnExplore.disabled = false;
-
-                if (!isCaught) {
-                    elName.innerText = "야생 포켓몬 찾기";
-                    elType.innerText = "타입";
-                    elHpText.innerText = "0 / 0";
-                    elHpBar.style.width = "0%";
-                    elImg.src = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png";
-                    elImg.classList.add('opacity-30');
-                }
-            }, 2000);
-        }
-
-        // Enable/Disable Control Buttons
-        function toggleActionButtons(enable) {
-            const buttons = [btnAttack, btnBait, btnCatch];
-            buttons.forEach(btn => {
-                if (enable) {
-                    btn.classList.remove('btn-disabled');
-                    btn.disabled = false;
-                } else {
-                    btn.classList.add('btn-disabled');
-                    btn.disabled = true;
-                }
-            });
-            if (enable) {
-                btnExplore.classList.add('btn-disabled');
-                btnExplore.disabled = true;
-            }
-        }
-
-        // Pokeball Selector
-        function selectBall(type) {
-            gameState.selectedBall = type;
-
-            ['poke', 'great', 'ultra'].forEach(b => {
-                const btn = document.getElementById(`ball-select-${b}`);
-                if (b === type) {
-                    btn.className = "px-3 py-1.5 rounded-lg border border-red-500 bg-red-500/20 text-xs font-bold flex items-center gap-1.5 transition-all ring-2 ring-red-500";
-                } else {
-                    btn.className = "px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all";
-                }
-            });
-
-            updateCaptureRateUI();
-        }
-
-        function updateBallCounts() {
-            document.getElementById('count-poke').innerText = gameState.balls.poke;
-            document.getElementById('count-great').innerText = gameState.balls.great;
-            document.getElementById('count-ultra').innerText = gameState.balls.ultra;
-        }
-
-
-        // Open Pokedex Modal
-        function openPokedexModal() {
-            renderPokedexGrid('all');
-            document.getElementById('pokedex-modal').classList.remove('hidden');
-        }
-
-        function closePokedexModal() {
-            document.getElementById('pokedex-modal').classList.add('hidden');
-        }
-
-        let currentFilter = 'all';
-        function filterPokedex(filter) {
-            currentFilter = filter;
-            document.getElementById('filter-all').className = filter === 'all' ? "px-3 py-1 rounded-lg text-xs font-bold bg-slate-700 text-white" : "px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-400";
-            document.getElementById('filter-recent').className = filter === 'recent' ? "px-3 py-1 rounded-lg text-xs font-bold bg-slate-700 text-white" : "px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-400";
-            renderPokedexGrid(filter);
-        }
-
-        function renderPokedexGrid(filter = 'all') {
-            const grid = document.getElementById('pokedex-grid');
-            document.getElementById('modal-total-count').innerText = gameState.caughtPokemon.length;
-
-            if (gameState.caughtPokemon.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full flex flex-col items-center justify-center p-8 text-slate-500">
-                        <i class="fa-solid fa-box-open text-4xl mb-3 opacity-50"></i>
-                        <p class="text-sm">아직 포획한 포켓몬이 없습니다.</p>
-                        <p class="text-xs text-slate-600 mt-1">야생 포켓몬을 수집해 도감을 채워보세요!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            let displayList = [...gameState.caughtPokemon];
-            if (filter === 'recent') {
-                displayList.reverse();
-            }
-
-            grid.innerHTML = displayList.map((p, idx) => `
-                <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 flex flex-col items-center hover:border-amber-500/50 transition-all shadow-md group">
-                    <div class="w-20 h-20 bg-slate-900/60 rounded-lg p-2 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
-                        <img src="${p.img}" alt="${p.name}" class="max-w-full max-h-full object-contain filter drop-shadow">
-                    </div>
-                    <span class="text-xs text-slate-400 font-mono">No.${String(p.id).padStart(3, '0')}</span>
-                    <h3 class="font-game text-sm text-amber-300 mt-0.5">${p.name}</h3>
-                    <div class="mt-2 flex items-center justify-between w-full text-[10px] text-slate-400 border-t border-slate-700/60 pt-1.5">
-                        <span class="px-1.5 py-0.5 bg-slate-700 rounded text-slate-300">${p.type}</span>
-                        <span>${p.caughtAt || '방금 전'}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Initial setup on window load
-        window.onload = function() {
-            updateBallCounts();
-            elImg.classList.add('opacity-30');
-        };
-    </script>
+    <script src="js/client.js"></script>
 </body>
 </html>
