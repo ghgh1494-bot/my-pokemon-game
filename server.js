@@ -12,8 +12,28 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+// 속성 상성표 (공격 타입 -> 방어 타입 비율)
+const TYPE_CHART = {
+    fire:    { grass: 1.5, water: 0.6, fire: 0.6, rock: 0.6 },
+    water:   { fire: 1.5, grass: 0.6, water: 0.6, dragon: 0.6 },
+    grass:   { water: 1.5, fire: 0.6, grass: 0.6, flying: 0.6, dragon: 0.6 },
+    electric:{ water: 1.5, flying: 1.5, electric: 0.6, grass: 0.6, dragon: 0.6 },
+    normal:  { rock: 0.6 },
+    flying:  { grass: 1.5, electric: 0.6, rock: 0.6 },
+    rock:    { fire: 1.5, flying: 1.5, grass: 0.6 },
+    dragon:  { dragon: 1.5 },
+    psychic: { poison: 1.5 }
+};
+
+function getTypeEffectiveness(atkType, defType) {
+    if (TYPE_CHART[atkType] && TYPE_CHART[atkType][defType]) {
+        return TYPE_CHART[atkType][defType];
+    }
+    return 1.0;
+}
+
 const POKEMON_DB = {
-    // 스타팅 & 풀/불/물 계열
+    // 스타팅 & 일반 포켓몬 (필드 풀)
     1:  { name: '이상해씨', type: 'grass', skillName: '🍃 덩굴채찍', maxPp: 15, reqLevel: 16, nextEvo: 2, reqStone: null, baseStats: { hp: 45, atk: 49, def: 49, spAtk: 65, spDef: 65, spd: 45 } },
     2:  { name: '이상해풀', type: 'grass', skillName: '🍃 잎날가르기', maxPp: 12, reqLevel: 32, nextEvo: 3, reqStone: '리프의 돌', baseStats: { hp: 60, atk: 62, def: 63, spAtk: 80, spDef: 80, spd: 60 } },
     3:  { name: '이상해꽃', type: 'grass', skillName: '🍃 솔라빔', maxPp: 8, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 80, atk: 82, def: 83, spAtk: 100, spDef: 100, spd: 80 } },
@@ -24,17 +44,14 @@ const POKEMON_DB = {
     8:  { name: '어니부기', type: 'water', skillName: '💧 거품광선', maxPp: 12, reqLevel: 36, nextEvo: 9, reqStone: '물의 돌', baseStats: { hp: 59, atk: 63, def: 80, spAtk: 65, spDef: 80, spd: 58 } },
     9:  { name: '거북왕',   type: 'water', skillName: '💧 하이드로펌프', maxPp: 8, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 79, atk: 83, def: 100, spAtk: 85, spDef: 105, spd: 78 } },
 
-    // 필드 출현 포켓몬들
     10: { name: '캐터피',   type: 'bug',    skillName: '🕸️ 몸통박치기', maxPp: 20, reqLevel: 7, nextEvo: null, reqStone: null, baseStats: { hp: 45, atk: 30, def: 35, spAtk: 20, spDef: 20, spd: 45 } },
     13: { name: '뿔충이',   type: 'bug',    skillName: '🐛 독침',       maxPp: 20, reqLevel: 7, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 35, def: 30, spAtk: 20, spDef: 20, spd: 50 } },
-    16: { name: '구구',     type: 'normal', skillName: '🌪️ 바람일으키기', maxPp: 20, reqLevel: 18, nextEvo: 17, reqStone: null, baseStats: { hp: 40, atk: 45, def: 40, spAtk: 35, spDef: 35, spd: 56 } },
-    17: { name: '피전트',   type: 'normal', skillName: '🌪️ 제비반환', maxPp: 15, reqLevel: 36, nextEvo: 18, reqStone: null, baseStats: { hp: 63, atk: 60, def: 55, spAtk: 50, spDef: 50, spd: 71 } },
-    18: { name: '피죤투',   type: 'normal', skillName: '🌪️ 폭풍', maxPp: 10, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 83, atk: 80, def: 75, spAtk: 70, spDef: 70, spd: 101 } },
+    16: { name: '구구',     type: 'flying', skillName: '🌪️ 바람일으키기', maxPp: 20, reqLevel: 18, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 45, def: 40, spAtk: 35, spDef: 35, spd: 56 } },
     19: { name: '꼬렛',     type: 'normal', skillName: '🦷 필살어금니', maxPp: 15, reqLevel: 20, nextEvo: null, reqStone: null, baseStats: { hp: 30, atk: 56, def: 35, spAtk: 25, spDef: 35, spd: 72 } },
     23: { name: '아보',     type: 'poison', skillName: '🐍 독침',       maxPp: 15, reqLevel: 22, nextEvo: null, reqStone: null, baseStats: { hp: 35, atk: 60, def: 44, spAtk: 40, spDef: 54, spd: 55 } },
     25: { name: '피카츄',   type: 'electric', skillName: '⚡ 전기쇼크', maxPp: 15, reqLevel: 20, nextEvo: 26, reqStone: '천둥의 돌', baseStats: { hp: 35, atk: 55, def: 40, spAtk: 50, spDef: 50, spd: 90 } },
     26: { name: '라이츄',   type: 'electric', skillName: '⚡ 10만볼트', maxPp: 10, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 60, atk: 90, def: 55, spAtk: 90, spDef: 80, spd: 110 } },
-    35: { name: '삐삐',     type: 'fairy',  skillName: '🌙 핑거돔',     maxPp: 15, reqLevel: 20, nextEvo: null, reqStone: null, baseStats: { hp: 70, atk: 45, def: 48, spAtk: 60, spDef: 65, spd: 35 } },
+    35: { name: '삐삐',     type: 'normal', skillName: '🌙 핑거돔',     maxPp: 15, reqLevel: 20, nextEvo: null, reqStone: null, baseStats: { hp: 70, atk: 45, def: 48, spAtk: 60, spDef: 65, spd: 35 } },
     37: { name: '식스테일', type: 'fire',   skillName: '🔥 화염방사',   maxPp: 12, reqLevel: 20, nextEvo: null, reqStone: null, baseStats: { hp: 38, atk: 41, def: 40, spAtk: 50, spDef: 65, spd: 65 } },
     39: { name: '푸린',     type: 'normal', skillName: '🎶 노래하기',   maxPp: 15, reqLevel: 20, nextEvo: null, reqStone: null, baseStats: { hp: 115, atk: 45, def: 20, spAtk: 45, spDef: 25, spd: 20 } },
     41: { name: '주뱃',     type: 'poison', skillName: '🦇 흡혈',       maxPp: 15, reqLevel: 22, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 45, def: 35, spAtk: 30, spDef: 40, spd: 55 } },
@@ -44,60 +61,64 @@ const POKEMON_DB = {
     63: { name: '케이시',   type: 'psychic', skillName: '🔮 사이코키네시스', maxPp: 10, reqLevel: 16, nextEvo: null, reqStone: null, baseStats: { hp: 25, atk: 20, def: 15, spAtk: 105, spDef: 55, spd: 90 } },
     74: { name: '꼬마돌',   type: 'rock',   skillName: '🪨 돌날리기',   maxPp: 15, reqLevel: 25, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 80, def: 100, spAtk: 30, spDef: 30, spd: 20 } },
     79: { name: '야돈',     type: 'water',  skillName: '🌀 염동력',     maxPp: 12, reqLevel: 37, nextEvo: null, reqStone: null, baseStats: { hp: 90, atk: 65, def: 65, spAtk: 40, spDef: 40, spd: 15 } },
-
-    // 스타팅 희귀 포켓몬 & 2세대 포켓몬 추가
     129: { name: '잉어킹',  type: 'water',  skillName: '💦 튀어오르기', maxPp: 30, reqLevel: 20, nextEvo: 130, reqStone: null, baseStats: { hp: 20, atk: 10, def: 55, spAtk: 15, spDef: 20, spd: 80 } },
-    130: { name: '갸라도스', type: 'water',  skillName: '🐉 파괴광선',   maxPp: 5,  reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 95, atk: 125, def: 79, spAtk: 60, spDef: 100, spd: 81 } },
     147: { name: '미뇽',     type: 'dragon', skillName: '🐉 용의분노',   maxPp: 10, reqLevel: 30, nextEvo: null, reqStone: null, baseStats: { hp: 41, atk: 64, def: 45, spAtk: 50, spDef: 50, spd: 50 } },
-    179: { name: '메리프',   type: 'electric', skillName: '⚡ 전기쇼크', maxPp: 15, reqLevel: 15, nextEvo: null, reqStone: null, baseStats: { hp: 55, atk: 40, def: 40, spAtk: 65, spDef: 45, spd: 35 } }
+    179: { name: '메리프',   type: 'electric', skillName: '⚡ 전기쇼크', maxPp: 15, reqLevel: 15, nextEvo: null, reqStone: null, baseStats: { hp: 55, atk: 40, def: 40, spAtk: 65, spDef: 45, spd: 35 } },
+
+    // 🔥 보스 전용 포켓몬 (일반 필드 스폰 풀에서 완벽 제외)
+    95:  { name: '롱스톤',   type: 'rock',   skillName: '🪨 암석봉인',   maxPp: 10, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 85, atk: 80, def: 160, spAtk: 30, spDef: 45, spd: 70 } },
+    121: { name: '아쿠스타', type: 'water',  skillName: '💧 하이드로펌프', maxPp: 10, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 90, atk: 75, def: 85, spAtk: 110, spDef: 85, spd: 115 } },
+    149: { name: '망나뇽',   type: 'dragon', skillName: '🐉 역린',       maxPp: 5,  reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 110, atk: 134, def: 95, spAtk: 100, spDef: 100, spd: 80 } }
 };
 
+// 보스와 야생 몬스터 완벽 분리
 const ZONES = {
     1: { 
         id: 1, 
-        name: '29번 도로 (연두마을 풀숲)', 
+        name: '29번 도로 (연두마을)', 
         minLevel: 2, 
         maxLevel: 6, 
-        pool: [10, 13, 16, 19, 52, 179, 1, 4, 7], // 다양한 잡몹 + 낮을 확률 스타팅 3종
-        bossId: 17, 
+        pool: [10, 13, 16, 19, 52, 179, 1, 4, 7], 
+        bossId: 95, 
         bossLevel: 8, 
-        bossName: '라이벌 실버의 피전트', 
+        bossName: '웅이의 롱스톤', 
         nextZoneId: 2 
     },
     2: { 
         id: 2, 
-        name: '30번 도로 & 달맞이산 동굴', 
+        name: '30번 도로 & 달맞이산', 
         minLevel: 7, 
         maxLevel: 12, 
         pool: [23, 35, 39, 41, 74, 79, 19, 16], 
-        bossId: 41, 
+        bossId: 121, 
         bossLevel: 14, 
-        bossName: '동굴의 왕 거대 주뱃', 
+        bossName: '이슬이의 아쿠스타', 
         nextZoneId: 3 
     },
     3: { 
         id: 3, 
-        name: '모구리탑 & 성도 체육관', 
+        name: '모구리탑 & 갈색체육관', 
         minLevel: 13, 
         maxLevel: 18, 
-        pool: [25, 37, 58, 63, 179, 16, 17], 
-        bossId: 18, 
+        pool: [25, 37, 58, 63, 179, 16], 
+        bossId: 26, 
         bossLevel: 20, 
-        bossName: '체육관 관장 비상 (피죤투)', 
+        bossName: '마티스의 라이츄', 
         nextZoneId: 4 
     },
     4: { 
         id: 4, 
-        name: '야돈의 우물 & 진철 호수', 
+        name: '야돈의 우물 & 석영고원', 
         minLevel: 19, 
         maxLevel: 25, 
-        pool: [54, 79, 129, 130, 147, 25, 2], 
-        bossId: 130, 
+        pool: [54, 79, 129, 147, 25, 2], 
+        bossId: 149, 
         bossLevel: 28, 
-        bossName: '분노의 붉은 갸라도스', 
+        bossName: '목호의 망나뇽', 
         nextZoneId: null 
     }
 };
+
 const USERS = {};
 
 function calculateStats(pokemonId, level) {
@@ -140,6 +161,7 @@ wss.on('connection', (ws) => {
                         partner: {
                             id: starterId,
                             name: dbInfo.name,
+                            type: dbInfo.type,
                             skillName: dbInfo.skillName,
                             level: 1,
                             exp: 0,
@@ -147,7 +169,7 @@ wss.on('connection', (ws) => {
                             hp: defaultStats.maxHp,
                             pp: dbInfo.maxPp,
                             maxPp: dbInfo.maxPp,
-                            affinity: 10.0, // 친밀도 %
+                            affinity: 10.0,
                             stats: defaultStats
                         },
                         location: '마을',
@@ -203,13 +225,16 @@ wss.on('connection', (ws) => {
                 user.location = '필드';
                 const zone = ZONES[user.currentZone];
                 const wildId = zone.pool[Math.floor(Math.random() * zone.pool.length)];
-                const isShiny = Math.random() < (1 / 4096);
+                
+                // ✨ 이로치(Shiny) 출현 확률 5% (1/20)로 대폭 상향!
+                const isShiny = Math.random() < 0.05; 
                 const wildLevel = Math.floor(Math.random() * (zone.maxLevel - zone.minLevel + 1)) + zone.minLevel;
                 const wildStats = calculateStats(wildId, wildLevel);
 
                 user.activeWild = {
                     id: wildId,
                     name: POKEMON_DB[wildId].name,
+                    type: POKEMON_DB[wildId].type,
                     level: wildLevel,
                     hp: wildStats.maxHp,
                     maxHp: wildStats.maxHp,
@@ -222,7 +247,9 @@ wss.on('connection', (ws) => {
                     type: 'WILD_SPAWN',
                     wild: user.activeWild,
                     user: user,
-                    msg: `야생의 ${isShiny ? '✨' : ''}${user.activeWild.name}(Lv.${wildLevel})이(가) 나타났다!`
+                    msg: isShiny 
+                        ? `✨✨ [희귀 발견!] 이로치 ${user.activeWild.name}(Lv.${wildLevel})이(가) 나타났다! ✨✨`
+                        : `야생의 ${user.activeWild.name}(Lv.${wildLevel})이(가) 나타났다!`
                 }));
             }
 
@@ -240,6 +267,7 @@ wss.on('connection', (ws) => {
                 user.activeWild = {
                     id: zone.bossId,
                     name: zone.bossName,
+                    type: POKEMON_DB[zone.bossId].type,
                     level: zone.bossLevel,
                     hp: bossStats.maxHp,
                     maxHp: bossStats.maxHp,
@@ -268,6 +296,14 @@ wss.on('connection', (ws) => {
                 let isDefending = false;
                 let actionMsg = '';
 
+                // 속성 상성 계산 적용
+                const playerType = user.partner.type || 'normal';
+                const enemyType = user.activeWild.type || 'normal';
+                const typeMult = getTypeEffectiveness(playerType, enemyType);
+                let typeMsg = '';
+                if (typeMult > 1.2) typeMsg = ' (💥 효과가 뛰어났다!)';
+                else if (typeMult < 0.8) typeMsg = ' (🌧️ 효과가 별로인 듯하다...)';
+
                 if (action === 'RUN') {
                     if (user.activeWild.isBoss) {
                         ws.send(JSON.stringify({ type: 'LOG', msg: '🚫 보스전에서는 도망칠 수 없습니다!' }));
@@ -289,9 +325,9 @@ wss.on('connection', (ws) => {
                     const affinityBonus = 1.0 + (user.partner.affinity / 200.0);
                     const playerAtk = user.partner.stats.atk * affinityBonus;
                     const wildDef = user.activeWild.stats.def;
-                    damageToWild = Math.max(5, Math.floor((playerAtk * 1.5) - (wildDef * 0.4)));
+                    damageToWild = Math.max(5, Math.floor(((playerAtk * 1.5) - (wildDef * 0.4)) * typeMult));
                     user.activeWild.hp -= damageToWild;
-                    actionMsg = `⚔️ [일반 공격] 상대에게 ${damageToWild} 데미지!`;
+                    actionMsg = `⚔️ [일반 공격] 상대에게 ${damageToWild} 데미지!${typeMsg}`;
                 } else if (action === 'SKILL') {
                     if (user.partner.pp <= 0) {
                         ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 스킬 PP가 다 소진되었습니다! 센터에서 회복하세요.' }));
@@ -301,9 +337,9 @@ wss.on('connection', (ws) => {
                     const affinityBonus = 1.0 + (user.partner.affinity / 200.0);
                     const playerSpAtk = user.partner.stats.spAtk * affinityBonus;
                     const wildSpDef = user.activeWild.stats.spDef;
-                    damageToWild = Math.max(10, Math.floor((playerSpAtk * 2.2) - (wildSpDef * 0.3)));
+                    damageToWild = Math.max(10, Math.floor(((playerSpAtk * 2.2) - (wildSpDef * 0.3)) * typeMult));
                     user.activeWild.hp -= damageToWild;
-                    actionMsg = `⚡ [스킬: ${user.partner.skillName}] ${damageToWild} 데미지!`;
+                    actionMsg = `⚡ [스킬: ${user.partner.skillName}] ${damageToWild} 데미지!${typeMsg}`;
                 } else if (action === 'DEFEND') {
                     isDefending = true;
                     actionMsg = `🛡️ [방어 태세] 피해 감소!`;
@@ -314,11 +350,11 @@ wss.on('connection', (ws) => {
                     const isBoss = user.activeWild.isBoss;
                     const currentZoneObj = ZONES[user.currentZone];
 
-                    const rewardGold = user.activeWild.level * (isBoss ? 1000 : 300);
-                    const rewardExp = user.activeWild.level * (isBoss ? 80 : 20);
+                    const rewardGold = user.activeWild.level * (isBoss ? 1500 : 350);
+                    const rewardExp = user.activeWild.level * (isBoss ? 100 : 25);
                     user.gold += rewardGold;
                     user.partner.exp += rewardExp;
-                    user.partner.affinity = Math.min(100.0, user.partner.affinity + 0.5); // 친밀도 상승
+                    user.partner.affinity = Math.min(100.0, user.partner.affinity + 0.5);
 
                     let unlockMsg = '';
                     if (isBoss && currentZoneObj.nextZoneId) {
@@ -351,9 +387,11 @@ wss.on('connection', (ws) => {
                     return;
                 }
 
+                // 상대 공격 상성 계산
+                const enemyTypeMult = getTypeEffectiveness(enemyType, playerType);
                 let wildAtk = user.activeWild.stats.atk;
                 let playerDef = user.partner.stats.def;
-                let damageToPlayer = Math.max(3, Math.floor((wildAtk * 1.2) - (playerDef * 0.5)));
+                let damageToPlayer = Math.max(3, Math.floor(((wildAtk * 1.2) - (playerDef * 0.5)) * enemyTypeMult));
 
                 if (isDefending) {
                     damageToPlayer = Math.floor(damageToPlayer * 0.4);
@@ -419,7 +457,7 @@ wss.on('connection', (ws) => {
                     ws.send(JSON.stringify({
                         type: 'CATCH_SUCCESS',
                         user: user,
-                        msg: `🎉 ${caught.name} 포획 성공! 수집함에 보관되었습니다.`
+                        msg: `🎉 ${caught.isShiny ? '✨이로치 ' : ''}${caught.name} 포획 성공! 수집함에 보관되었습니다.`
                     }));
                 } else {
                     ws.send(JSON.stringify({
@@ -440,7 +478,7 @@ wss.on('connection', (ws) => {
                 if (user.gold >= cost) {
                     user.gold -= cost;
                     user.partner.exp += 30;
-                    user.partner.affinity = Math.min(100.0, user.partner.affinity + 1.5); // 친밀도 상승
+                    user.partner.affinity = Math.min(100.0, user.partner.affinity + 1.5);
 
                     let msg = `🏋️ 훈련 완료! (+30 EXP, 친밀도 +1.5%, -${cost.toLocaleString()}G)`;
 
@@ -495,6 +533,7 @@ wss.on('connection', (ws) => {
                 const nextInfo = POKEMON_DB[pInfo.nextEvo];
                 user.partner.id = pInfo.nextEvo;
                 user.partner.name = nextInfo.name;
+                user.partner.type = nextInfo.type;
                 user.partner.skillName = nextInfo.skillName;
                 user.partner.maxPp = nextInfo.maxPp;
                 user.partner.pp = nextInfo.maxPp;
@@ -508,10 +547,9 @@ wss.on('connection', (ws) => {
         }
     });
 
-function broadcastUserList() {
+    function broadcastUserList() {
         const list = Object.values(USERS).map(u => {
             const p = u.partner;
-            // 전투력(CP) = 공격력 + 방어력 + 특수공격 + 특수방어 + 스피드 + (레벨 * 10)
             const cp = p.stats.atk + p.stats.def + p.stats.spAtk + p.stats.spDef + p.stats.spd + (p.level * 10);
             return {
                 nickname: u.nickname,
