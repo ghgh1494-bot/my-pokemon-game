@@ -199,7 +199,6 @@ function updateUI(user) {
     document.getElementById('partner-name').innerText = p.name;
     document.getElementById('partner-level').innerText = `Lv.${p.level}`;
     
-    // 스킬 버튼 이름과 PP 분리 업데이트
     document.getElementById('btn-skill-name').innerText = p.skillName || '스킬';
     document.getElementById('btn-skill-pp').innerText = `(${p.pp}/${p.maxPp})`;
 
@@ -219,17 +218,15 @@ function updateUI(user) {
     document.getElementById('stat-affinity').innerText = `${Math.floor(p.affinity)}%`;
     document.getElementById('stat-pp').innerText = `${p.pp} / ${p.maxPp}`;
 
-    // 기존 (저화질 뒷모습 이미지)
-    // document.getElementById('partner-pokemon-img').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${p.id}.png`;
-
-    // 변경 (고해상도 공식 아트워크 + 좌우반전 유지)
     document.getElementById('partner-pokemon-img').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`;
 
     document.getElementById('count-poke').innerText = user.balls.poke || 0;
     document.getElementById('count-super').innerText = user.balls.super || 0;
     document.getElementById('count-hyper').innerText = user.balls.hyper || 0;
 
-    if (!inBattleState) {
+    // 🔥 서버에서 activeWild가 없거나 location이 마을이면 전투 상태 강제 해제 및 UI 완전 리셋
+    if (!user.activeWild || user.location === '마을') {
+        inBattleState = false;
         document.getElementById('enemy-hp-card').classList.add('invisible');
         document.getElementById('enemy-sprite-container').classList.add('invisible');
         toggleBattleButtons(false);
