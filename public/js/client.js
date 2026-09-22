@@ -185,7 +185,11 @@ function updateUI(user) {
     document.getElementById('stat-affinity').innerText = `${Math.floor(p.affinity)}%`;
     document.getElementById('stat-pp').innerText = `${p.pp} / ${p.maxPp}`;
 
-    document.getElementById('partner-pokemon-img').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${p.id}.png`;
+    // 기존 (저화질 뒷모습 이미지)
+    // document.getElementById('partner-pokemon-img').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${p.id}.png`;
+
+    // 변경 (고해상도 공식 아트워크 + 좌우반전 유지)
+    document.getElementById('partner-pokemon-img').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`;
 
     document.getElementById('count-poke').innerText = user.balls.poke || 0;
     document.getElementById('count-super').innerText = user.balls.super || 0;
