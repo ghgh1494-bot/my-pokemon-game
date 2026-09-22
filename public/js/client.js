@@ -313,6 +313,10 @@ function renderZoneList(zones, unlockedZones, currentZone) {
 }
 
 function changeZone(zoneId) {
+    if (inBattleState) {
+        alert('전투 중에는 지역을 이동할 수 없습니다! 도망치기를 먼저 이용해주세요.');
+        return;
+    }
     ws.send(JSON.stringify({ type: 'CHANGE_ZONE', zoneId: zoneId }));
     closeModal('zone-modal');
 }
