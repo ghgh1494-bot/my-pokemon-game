@@ -13,23 +13,23 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 const POKEMON_DB = {
-    1:  { name: '이상해씨', type: 'grass', skillName: '🍃 덩굴채찍', reqLevel: 16, nextEvo: 2, reqStone: null, baseStats: { hp: 45, atk: 49, def: 49, spAtk: 65, spDef: 65, spd: 45 } },
-    2:  { name: '이상해풀', type: 'grass', skillName: '🍃 잎날가르기', reqLevel: 32, nextEvo: 3, reqStone: '리프의 돌', baseStats: { hp: 60, atk: 62, def: 63, spAtk: 80, spDef: 80, spd: 60 } },
-    3:  { name: '이상해꽃', type: 'grass', skillName: '🍃 솔라빔', reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 80, atk: 82, def: 83, spAtk: 100, spDef: 100, spd: 80 } },
-    4:  { name: '파이리',   type: 'fire',  skillName: '🔥 불꽃세례', reqLevel: 16, nextEvo: 5, reqStone: null, baseStats: { hp: 39, atk: 52, def: 43, spAtk: 60, spDef: 50, spd: 65 } },
-    5:  { name: '리자드',   type: 'fire',  skillName: '🔥 화염방사', reqLevel: 36, nextEvo: 6, reqStone: '불꽃의 돌', baseStats: { hp: 58, atk: 64, def: 58, spAtk: 80, spDef: 65, spd: 80 } },
-    6:  { name: '리자몽',   type: 'fire',  skillName: '🔥 불대문자', reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 78, atk: 84, def: 78, spAtk: 109, spDef: 85, spd: 100 } },
-    7:  { name: '꼬부기',   type: 'water', skillName: '💧 물대포', reqLevel: 16, nextEvo: 8, reqStone: null, baseStats: { hp: 44, atk: 48, def: 65, spAtk: 50, spDef: 64, spd: 43 } },
-    8:  { name: '어니부기', type: 'water', skillName: '💧 거품광선', reqLevel: 36, nextEvo: 9, reqStone: '물의 돌', baseStats: { hp: 59, atk: 63, def: 80, spAtk: 65, spDef: 80, spd: 58 } },
-    9:  { name: '거북왕',   type: 'water', skillName: '💧 하이드로펌프', reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 79, atk: 83, def: 100, spAtk: 85, spDef: 105, spd: 78 } },
-    16: { name: '구구',     type: 'normal', skillName: '🌪️ 바람일으키기', reqLevel: 18, nextEvo: 17, reqStone: null, baseStats: { hp: 40, atk: 45, def: 40, spAtk: 35, spDef: 35, spd: 56 } },
-    17: { name: '피전트',   type: 'normal', skillName: '🌪️ 제비반환', reqLevel: 36, nextEvo: 18, reqStone: null, baseStats: { hp: 63, atk: 60, def: 55, spAtk: 50, spDef: 50, spd: 71 } },
-    18: { name: '피죤투',   type: 'normal', skillName: '🌪️ 폭풍', reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 83, atk: 80, def: 75, spAtk: 70, spDef: 70, spd: 101 } },
-    19: { name: '꼬렛',     type: 'normal', skillName: '🦷 필살어금니', reqLevel: 20, nextEvo: null, reqStone: null, baseStats: { hp: 30, atk: 56, def: 35, spAtk: 25, spDef: 35, spd: 72 } },
-    25: { name: '피카츄',   type: 'electric', skillName: '⚡ 전기쇼크', reqLevel: 20, nextEvo: 26, reqStone: '천둥의 돌', baseStats: { hp: 35, atk: 55, def: 40, spAtk: 50, spDef: 50, spd: 90 } },
-    26: { name: '라이츄',   type: 'electric', skillName: '⚡ 10만볼트', reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 60, atk: 90, def: 55, spAtk: 90, spDef: 80, spd: 110 } },
-    41: { name: '주뱃',     type: 'poison', skillName: '🦇 흡혈', reqLevel: 22, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 45, def: 35, spAtk: 30, spDef: 40, spd: 55 } },
-    79: { name: '야돈',     type: 'water', skillName: '🌀 염동력', reqLevel: 37, nextEvo: null, reqStone: null, baseStats: { hp: 90, atk: 65, def: 65, spAtk: 40, spDef: 40, spd: 15 } }
+    1:  { name: '이상해씨', type: 'grass', skillName: '🍃 덩굴채찍', maxPp: 15, reqLevel: 16, nextEvo: 2, reqStone: null, baseStats: { hp: 45, atk: 49, def: 49, spAtk: 65, spDef: 65, spd: 45 } },
+    2:  { name: '이상해풀', type: 'grass', skillName: '🍃 잎날가르기', maxPp: 12, reqLevel: 32, nextEvo: 3, reqStone: '리프의 돌', baseStats: { hp: 60, atk: 62, def: 63, spAtk: 80, spDef: 80, spd: 60 } },
+    3:  { name: '이상해꽃', type: 'grass', skillName: '🍃 솔라빔', maxPp: 8, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 80, atk: 82, def: 83, spAtk: 100, spDef: 100, spd: 80 } },
+    4:  { name: '파이리',   type: 'fire',  skillName: '🔥 불꽃세례', maxPp: 15, reqLevel: 16, nextEvo: 5, reqStone: null, baseStats: { hp: 39, atk: 52, def: 43, spAtk: 60, spDef: 50, spd: 65 } },
+    5:  { name: '리자드',   type: 'fire',  skillName: '🔥 화염방사', maxPp: 10, reqLevel: 36, nextEvo: 6, reqStone: '불꽃의 돌', baseStats: { hp: 58, atk: 64, def: 58, spAtk: 80, spDef: 65, spd: 80 } },
+    6:  { name: '리자몽',   type: 'fire',  skillName: '🔥 불대문자', maxPp: 5, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 78, atk: 84, def: 78, spAtk: 109, spDef: 85, spd: 100 } },
+    7:  { name: '꼬부기',   type: 'water', skillName: '💧 물대포', maxPp: 15, reqLevel: 16, nextEvo: 8, reqStone: null, baseStats: { hp: 44, atk: 48, def: 65, spAtk: 50, spDef: 64, spd: 43 } },
+    8:  { name: '어니부기', type: 'water', skillName: '💧 거품광선', maxPp: 12, reqLevel: 36, nextEvo: 9, reqStone: '물의 돌', baseStats: { hp: 59, atk: 63, def: 80, spAtk: 65, spDef: 80, spd: 58 } },
+    9:  { name: '거북왕',   type: 'water', skillName: '💧 하이드로펌프', maxPp: 8, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 79, atk: 83, def: 100, spAtk: 85, spDef: 105, spd: 78 } },
+    16: { name: '구구',     type: 'normal', skillName: '🌪️ 바람일으키기', maxPp: 20, reqLevel: 18, nextEvo: 17, reqStone: null, baseStats: { hp: 40, atk: 45, def: 40, spAtk: 35, spDef: 35, spd: 56 } },
+    17: { name: '피전트',   type: 'normal', skillName: '🌪️ 제비반환', maxPp: 15, reqLevel: 36, nextEvo: 18, reqStone: null, baseStats: { hp: 63, atk: 60, def: 55, spAtk: 50, spDef: 50, spd: 71 } },
+    18: { name: '피죤투',   type: 'normal', skillName: '🌪️ 폭풍', maxPp: 10, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 83, atk: 80, def: 75, spAtk: 70, spDef: 70, spd: 101 } },
+    19: { name: '꼬렛',     type: 'normal', skillName: '🦷 필살어금니', maxPp: 15, reqLevel: 20, nextEvo: null, reqStone: null, baseStats: { hp: 30, atk: 56, def: 35, spAtk: 25, spDef: 35, spd: 72 } },
+    25: { name: '피카츄',   type: 'electric', skillName: '⚡ 전기쇼크', maxPp: 15, reqLevel: 20, nextEvo: 26, reqStone: '천둥의 돌', baseStats: { hp: 35, atk: 55, def: 40, spAtk: 50, spDef: 50, spd: 90 } },
+    26: { name: '라이츄',   type: 'electric', skillName: '⚡ 10만볼트', maxPp: 10, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 60, atk: 90, def: 55, spAtk: 90, spDef: 80, spd: 110 } },
+    41: { name: '주뱃',     type: 'poison', skillName: '🦇 흡혈', maxPp: 15, reqLevel: 22, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 45, def: 35, spAtk: 30, spDef: 40, spd: 55 } },
+    79: { name: '야돈',     type: 'water', skillName: '🌀 염동력', maxPp: 12, reqLevel: 37, nextEvo: null, reqStone: null, baseStats: { hp: 90, atk: 65, def: 65, spAtk: 40, spDef: 40, spd: 15 } }
 };
 
 const ZONES = {
@@ -53,7 +53,7 @@ function calculateStats(pokemonId, level) {
 }
 
 function checkNeedsHeal(user) {
-    return user.partner.hp <= 0 || user.partner.fatigue >= 100;
+    return user.partner.hp <= 0;
 }
 
 wss.on('connection', (ws) => {
@@ -69,6 +69,7 @@ wss.on('connection', (ws) => {
 
                 if (!USERS[userId]) {
                     const defaultStats = calculateStats(starterId, 1);
+                    const dbInfo = POKEMON_DB[starterId];
                     USERS[userId] = {
                         nickname: userId,
                         gold: 5000,
@@ -79,15 +80,15 @@ wss.on('connection', (ws) => {
                         inventory: { '불꽃의 돌': 1, '물의 돌': 1, '리프의 돌': 1, '천둥의 돌': 1 },
                         partner: {
                             id: starterId,
-                            name: POKEMON_DB[starterId].name,
-                            skillName: POKEMON_DB[starterId].skillName,
+                            name: dbInfo.name,
+                            skillName: dbInfo.skillName,
                             level: 1,
                             exp: 0,
                             maxExp: 50,
                             hp: defaultStats.maxHp,
-                            maxHp: defaultStats.maxHp,
-                            fatigue: 0,
-                            isShiny: false,
+                            pp: dbInfo.maxPp,
+                            maxPp: dbInfo.maxPp,
+                            affinity: 10.0, // 친밀도 %
                             stats: defaultStats
                         },
                         location: '마을',
@@ -136,7 +137,7 @@ wss.on('connection', (ws) => {
 
             if (data.type === 'EXPLORE_FIELD') {
                 if (checkNeedsHeal(user)) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없거나 지쳤습니다! 센터에서 치료하세요.' }));
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없습니다! 센터에서 치료하세요.' }));
                     return;
                 }
 
@@ -168,7 +169,7 @@ wss.on('connection', (ws) => {
 
             if (data.type === 'CHALLENGE_BOSS') {
                 if (checkNeedsHeal(user)) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없거나 지쳤습니다! 센터에서 치료 후 도전하세요.' }));
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없습니다! 센터에서 치료 후 도전하세요.' }));
                     return;
                 }
 
@@ -226,17 +227,23 @@ wss.on('connection', (ws) => {
                         actionMsg = '🏃 도망치는 데 실패했습니다!';
                     }
                 } else if (action === 'ATTACK') {
-                    const playerAtk = user.partner.stats.atk;
+                    const affinityBonus = 1.0 + (user.partner.affinity / 200.0);
+                    const playerAtk = user.partner.stats.atk * affinityBonus;
                     const wildDef = user.activeWild.stats.def;
                     damageToWild = Math.max(5, Math.floor((playerAtk * 1.5) - (wildDef * 0.4)));
                     user.activeWild.hp -= damageToWild;
                     actionMsg = `⚔️ [일반 공격] 상대에게 ${damageToWild} 데미지!`;
                 } else if (action === 'SKILL') {
-                    const playerSpAtk = user.partner.stats.spAtk;
+                    if (user.partner.pp <= 0) {
+                        ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 스킬 PP가 다 소진되었습니다! 센터에서 회복하세요.' }));
+                        return;
+                    }
+                    user.partner.pp -= 1;
+                    const affinityBonus = 1.0 + (user.partner.affinity / 200.0);
+                    const playerSpAtk = user.partner.stats.spAtk * affinityBonus;
                     const wildSpDef = user.activeWild.stats.spDef;
                     damageToWild = Math.max(10, Math.floor((playerSpAtk * 2.2) - (wildSpDef * 0.3)));
                     user.activeWild.hp -= damageToWild;
-                    user.partner.fatigue = Math.min(100, user.partner.fatigue + 5);
                     actionMsg = `⚡ [스킬: ${user.partner.skillName}] ${damageToWild} 데미지!`;
                 } else if (action === 'DEFEND') {
                     isDefending = true;
@@ -252,12 +259,13 @@ wss.on('connection', (ws) => {
                     const rewardExp = user.activeWild.level * (isBoss ? 80 : 20);
                     user.gold += rewardGold;
                     user.partner.exp += rewardExp;
+                    user.partner.affinity = Math.min(100.0, user.partner.affinity + 0.5); // 친밀도 상승
 
                     let unlockMsg = '';
                     if (isBoss && currentZoneObj.nextZoneId) {
                         if (!user.unlockedZones.includes(currentZoneObj.nextZoneId)) {
                             user.unlockedZones.push(currentZoneObj.nextZoneId);
-                            unlockMsg = ` 🎊 다음 지역 [${ZONES[currentZoneObj.nextZoneId].name}] 해금!`;
+                            unlockMsg = `\n🎊 다음 지역 [${ZONES[currentZoneObj.nextZoneId].name}] 해금!`;
                         }
                     }
 
@@ -268,7 +276,7 @@ wss.on('connection', (ws) => {
                         user.partner.maxExp = Math.floor(user.partner.maxExp * 1.25);
                         user.partner.stats = calculateStats(user.partner.id, user.partner.level);
                         user.partner.hp = user.partner.stats.maxHp;
-                        levelUpMsg = ` 🎉 레벨 업! (Lv.${user.partner.level})`;
+                        levelUpMsg = `\n🎉 레벨 업! (Lv.${user.partner.level})`;
                     }
 
                     const wildName = user.activeWild.name;
@@ -314,7 +322,8 @@ wss.on('connection', (ws) => {
                     wildMaxHp: user.activeWild.maxHp,
                     partnerHp: user.partner.hp,
                     partnerMaxHp: user.partner.stats.maxHp,
-                    msg: `${actionMsg} | 💥 상대 반격: ${damageToPlayer} 데미지`
+                    attacker: action === 'DEFEND' || action === 'RUN' ? 'enemy' : 'partner',
+                    msg: `${actionMsg}\n💥 상대 반격: ${damageToPlayer} 데미지`
                 }));
             }
 
@@ -364,7 +373,7 @@ wss.on('connection', (ws) => {
 
             if (data.type === 'TRAIN') {
                 if (checkNeedsHeal(user)) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없거나 지쳤습니다! 센터에서 치료받으세요.' }));
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없습니다! 센터에서 치료받으세요.' }));
                     return;
                 }
 
@@ -372,9 +381,9 @@ wss.on('connection', (ws) => {
                 if (user.gold >= cost) {
                     user.gold -= cost;
                     user.partner.exp += 30;
-                    user.partner.fatigue = Math.min(100, user.partner.fatigue + 15);
+                    user.partner.affinity = Math.min(100.0, user.partner.affinity + 1.5); // 친밀도 상승
 
-                    let msg = `🏋️ 훈련 완료! (+30 EXP, -${cost.toLocaleString()}G)`;
+                    let msg = `🏋️ 훈련 완료! (+30 EXP, 친밀도 +1.5%, -${cost.toLocaleString()}G)`;
 
                     if (user.partner.exp >= user.partner.maxExp) {
                         user.partner.level += 1;
@@ -391,12 +400,13 @@ wss.on('connection', (ws) => {
             }
 
             if (data.type === 'HEAL') {
-                const healCost = (user.partner.stats.maxHp - user.partner.hp) * 10 + (user.partner.fatigue * 5);
+                const healCost = (user.partner.stats.maxHp - user.partner.hp) * 10 + (user.partner.maxPp - user.partner.pp) * 20;
                 if (user.gold >= healCost) {
                     user.gold -= healCost;
                     user.partner.hp = user.partner.stats.maxHp;
-                    user.partner.fatigue = 0;
-                    ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: `🏥 파트너 포켓몬이 완치되었습니다!` }));
+                    user.partner.pp = user.partner.maxPp;
+                    user.partner.affinity = Math.min(100.0, user.partner.affinity + 2.0);
+                    ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: `🏥 파트너 포켓몬이 완치되고 스킬 PP가 회복되었습니다!` }));
                 } else {
                     ws.send(JSON.stringify({ type: 'LOG', msg: '치료 골드가 부족합니다.' }));
                 }
@@ -409,13 +419,11 @@ wss.on('connection', (ws) => {
                     return;
                 }
 
-                // 레벨 조건 검사
                 if (user.partner.level < pInfo.reqLevel) {
                     ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 진화 레벨이 부족합니다! (필요 레벨: Lv.${pInfo.reqLevel})` }));
                     return;
                 }
 
-                // 진화의 돌 조건 검사
                 if (pInfo.reqStone && (user.inventory[pInfo.reqStone] || 0) <= 0) {
                     ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 진화에 [${pInfo.reqStone}]이 필요합니다.` }));
                     return;
@@ -425,9 +433,12 @@ wss.on('connection', (ws) => {
                     user.inventory[pInfo.reqStone] -= 1;
                 }
 
+                const nextInfo = POKEMON_DB[pInfo.nextEvo];
                 user.partner.id = pInfo.nextEvo;
-                user.partner.name = POKEMON_DB[pInfo.nextEvo].name;
-                user.partner.skillName = POKEMON_DB[pInfo.nextEvo].skillName;
+                user.partner.name = nextInfo.name;
+                user.partner.skillName = nextInfo.skillName;
+                user.partner.maxPp = nextInfo.maxPp;
+                user.partner.pp = nextInfo.maxPp;
                 user.partner.stats = calculateStats(user.partner.id, user.partner.level);
                 user.partner.hp = user.partner.stats.maxHp;
 
