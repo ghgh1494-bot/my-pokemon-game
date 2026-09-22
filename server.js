@@ -449,11 +449,20 @@ wss.on('connection', (ws) => {
         }
     });
 
-    function broadcastUserList() {
-        const list = Object.values(USERS).map(u => ({
-            nickname: u.nickname,
-            zoneName: u.currentZoneName || '연두마을'
-        }));
+function broadcastUserList() {
+        const list = Object.values(USERS).map(u => {
+            const p = u.partner;
+            // 전투력(CP) = 공격력 + 방어력 + 특수공격 + 특수방어 + 스피드 + (레벨 * 10)
+            const cp = p.stats.atk + p.stats.def + p.stats.spAtk + p.stats.spDef + p.stats.spd + (p.level * 10);
+            return {
+                nickname: u.nickname,
+                zoneName: u.currentZoneName || '연두마을',
+                cp: cp,
+                partnerName: p.name,
+                partnerLevel: p.level
+            };
+        });
+
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({ type: 'SIDEBAR_LIST', users: list }));
