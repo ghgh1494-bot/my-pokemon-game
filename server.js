@@ -13,6 +13,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 const POKEMON_DB = {
+    // 스타팅 & 풀/불/물 계열
     1:  { name: '이상해씨', type: 'grass', skillName: '🍃 덩굴채찍', maxPp: 15, reqLevel: 16, nextEvo: 2, reqStone: null, baseStats: { hp: 45, atk: 49, def: 49, spAtk: 65, spDef: 65, spd: 45 } },
     2:  { name: '이상해풀', type: 'grass', skillName: '🍃 잎날가르기', maxPp: 12, reqLevel: 32, nextEvo: 3, reqStone: '리프의 돌', baseStats: { hp: 60, atk: 62, def: 63, spAtk: 80, spDef: 80, spd: 60 } },
     3:  { name: '이상해꽃', type: 'grass', skillName: '🍃 솔라빔', maxPp: 8, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 80, atk: 82, def: 83, spAtk: 100, spDef: 100, spd: 80 } },
@@ -22,23 +23,81 @@ const POKEMON_DB = {
     7:  { name: '꼬부기',   type: 'water', skillName: '💧 물대포', maxPp: 15, reqLevel: 16, nextEvo: 8, reqStone: null, baseStats: { hp: 44, atk: 48, def: 65, spAtk: 50, spDef: 64, spd: 43 } },
     8:  { name: '어니부기', type: 'water', skillName: '💧 거품광선', maxPp: 12, reqLevel: 36, nextEvo: 9, reqStone: '물의 돌', baseStats: { hp: 59, atk: 63, def: 80, spAtk: 65, spDef: 80, spd: 58 } },
     9:  { name: '거북왕',   type: 'water', skillName: '💧 하이드로펌프', maxPp: 8, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 79, atk: 83, def: 100, spAtk: 85, spDef: 105, spd: 78 } },
+
+    // 필드 출현 포켓몬들
+    10: { name: '캐터피',   type: 'bug',    skillName: '🕸️ 몸통박치기', maxPp: 20, reqLevel: 7, nextEvo: null, reqStone: null, baseStats: { hp: 45, atk: 30, def: 35, spAtk: 20, spDef: 20, spd: 45 } },
+    13: { name: '뿔충이',   type: 'bug',    skillName: '🐛 독침',       maxPp: 20, reqLevel: 7, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 35, def: 30, spAtk: 20, spDef: 20, spd: 50 } },
     16: { name: '구구',     type: 'normal', skillName: '🌪️ 바람일으키기', maxPp: 20, reqLevel: 18, nextEvo: 17, reqStone: null, baseStats: { hp: 40, atk: 45, def: 40, spAtk: 35, spDef: 35, spd: 56 } },
     17: { name: '피전트',   type: 'normal', skillName: '🌪️ 제비반환', maxPp: 15, reqLevel: 36, nextEvo: 18, reqStone: null, baseStats: { hp: 63, atk: 60, def: 55, spAtk: 50, spDef: 50, spd: 71 } },
     18: { name: '피죤투',   type: 'normal', skillName: '🌪️ 폭풍', maxPp: 10, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 83, atk: 80, def: 75, spAtk: 70, spDef: 70, spd: 101 } },
     19: { name: '꼬렛',     type: 'normal', skillName: '🦷 필살어금니', maxPp: 15, reqLevel: 20, nextEvo: null, reqStone: null, baseStats: { hp: 30, atk: 56, def: 35, spAtk: 25, spDef: 35, spd: 72 } },
+    23: { name: '아보',     type: 'poison', skillName: '🐍 독침',       maxPp: 15, reqLevel: 22, nextEvo: null, reqStone: null, baseStats: { hp: 35, atk: 60, def: 44, spAtk: 40, spDef: 54, spd: 55 } },
     25: { name: '피카츄',   type: 'electric', skillName: '⚡ 전기쇼크', maxPp: 15, reqLevel: 20, nextEvo: 26, reqStone: '천둥의 돌', baseStats: { hp: 35, atk: 55, def: 40, spAtk: 50, spDef: 50, spd: 90 } },
     26: { name: '라이츄',   type: 'electric', skillName: '⚡ 10만볼트', maxPp: 10, reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 60, atk: 90, def: 55, spAtk: 90, spDef: 80, spd: 110 } },
-    41: { name: '주뱃',     type: 'poison', skillName: '🦇 흡혈', maxPp: 15, reqLevel: 22, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 45, def: 35, spAtk: 30, spDef: 40, spd: 55 } },
-    79: { name: '야돈',     type: 'water', skillName: '🌀 염동력', maxPp: 12, reqLevel: 37, nextEvo: null, reqStone: null, baseStats: { hp: 90, atk: 65, def: 65, spAtk: 40, spDef: 40, spd: 15 } }
+    35: { name: '삐삐',     type: 'fairy',  skillName: '🌙 핑거돔',     maxPp: 15, reqLevel: 20, nextEvo: null, reqStone: null, baseStats: { hp: 70, atk: 45, def: 48, spAtk: 60, spDef: 65, spd: 35 } },
+    37: { name: '식스테일', type: 'fire',   skillName: '🔥 화염방사',   maxPp: 12, reqLevel: 20, nextEvo: null, reqStone: null, baseStats: { hp: 38, atk: 41, def: 40, spAtk: 50, spDef: 65, spd: 65 } },
+    39: { name: '푸린',     type: 'normal', skillName: '🎶 노래하기',   maxPp: 15, reqLevel: 20, nextEvo: null, reqStone: null, baseStats: { hp: 115, atk: 45, def: 20, spAtk: 45, spDef: 25, spd: 20 } },
+    41: { name: '주뱃',     type: 'poison', skillName: '🦇 흡혈',       maxPp: 15, reqLevel: 22, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 45, def: 35, spAtk: 30, spDef: 40, spd: 55 } },
+    52: { name: '나옹',     type: 'normal', skillName: '💰 고양이돈받기', maxPp: 15, reqLevel: 28, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 45, def: 35, spAtk: 40, spDef: 40, spd: 90 } },
+    54: { name: '고라파덕', type: 'water',  skillName: '🌀 염동력',     maxPp: 12, reqLevel: 33, nextEvo: null, reqStone: null, baseStats: { hp: 50, atk: 52, def: 48, spAtk: 65, spDef: 50, spd: 55 } },
+    58: { name: '가디',     type: 'fire',   skillName: '🔥 화염자동차', maxPp: 12, reqLevel: 30, nextEvo: null, reqStone: null, baseStats: { hp: 55, atk: 70, def: 45, spAtk: 70, spDef: 50, spd: 60 } },
+    63: { name: '케이시',   type: 'psychic', skillName: '🔮 사이코키네시스', maxPp: 10, reqLevel: 16, nextEvo: null, reqStone: null, baseStats: { hp: 25, atk: 20, def: 15, spAtk: 105, spDef: 55, spd: 90 } },
+    74: { name: '꼬마돌',   type: 'rock',   skillName: '🪨 돌날리기',   maxPp: 15, reqLevel: 25, nextEvo: null, reqStone: null, baseStats: { hp: 40, atk: 80, def: 100, spAtk: 30, spDef: 30, spd: 20 } },
+    79: { name: '야돈',     type: 'water',  skillName: '🌀 염동력',     maxPp: 12, reqLevel: 37, nextEvo: null, reqStone: null, baseStats: { hp: 90, atk: 65, def: 65, spAtk: 40, spDef: 40, spd: 15 } },
+
+    // 스타팅 희귀 포켓몬 & 2세대 포켓몬 추가
+    129: { name: '잉어킹',  type: 'water',  skillName: '💦 튀어오르기', maxPp: 30, reqLevel: 20, nextEvo: 130, reqStone: null, baseStats: { hp: 20, atk: 10, def: 55, spAtk: 15, spDef: 20, spd: 80 } },
+    130: { name: '갸라도스', type: 'water',  skillName: '🐉 파괴광선',   maxPp: 5,  reqLevel: 99, nextEvo: null, reqStone: null, baseStats: { hp: 95, atk: 125, def: 79, spAtk: 60, spDef: 100, spd: 81 } },
+    147: { name: '미뇽',     type: 'dragon', skillName: '🐉 용의분노',   maxPp: 10, reqLevel: 30, nextEvo: null, reqStone: null, baseStats: { hp: 41, atk: 64, def: 45, spAtk: 50, spDef: 50, spd: 50 } },
+    179: { name: '메리프',   type: 'electric', skillName: '⚡ 전기쇼크', maxPp: 15, reqLevel: 15, nextEvo: null, reqStone: null, baseStats: { hp: 55, atk: 40, def: 40, spAtk: 65, spDef: 45, spd: 35 } }
 };
 
 const ZONES = {
-    1: { id: 1, name: '29번 도로 (연두마을)', minLevel: 2, maxLevel: 5, pool: [16, 19], bossId: 17, bossLevel: 7, bossName: '실버의 피전트', nextZoneId: 2 },
-    2: { id: 2, name: '30번 도로 & 동굴', minLevel: 6, maxLevel: 9, pool: [16, 19, 41], bossId: 41, bossLevel: 10, bossName: '동굴의 왕 주뱃', nextZoneId: 3 },
-    3: { id: 3, name: '모구리탑 & 체육관', minLevel: 10, maxLevel: 13, pool: [16, 19, 25, 41], bossId: 18, bossLevel: 14, bossName: '비상 (피죤투)', nextZoneId: 4 },
-    4: { id: 4, name: '야돈의 우물', minLevel: 14, maxLevel: 18, pool: [41, 79, 25], bossId: 79, bossLevel: 20, bossName: '거대 야돈', nextZoneId: null }
+    1: { 
+        id: 1, 
+        name: '29번 도로 (연두마을 풀숲)', 
+        minLevel: 2, 
+        maxLevel: 6, 
+        pool: [10, 13, 16, 19, 52, 179, 1, 4, 7], // 다양한 잡몹 + 낮을 확률 스타팅 3종
+        bossId: 17, 
+        bossLevel: 8, 
+        bossName: '라이벌 실버의 피전트', 
+        nextZoneId: 2 
+    },
+    2: { 
+        id: 2, 
+        name: '30번 도로 & 달맞이산 동굴', 
+        minLevel: 7, 
+        maxLevel: 12, 
+        pool: [23, 35, 39, 41, 74, 79, 19, 16], 
+        bossId: 41, 
+        bossLevel: 14, 
+        bossName: '동굴의 왕 거대 주뱃', 
+        nextZoneId: 3 
+    },
+    3: { 
+        id: 3, 
+        name: '모구리탑 & 성도 체육관', 
+        minLevel: 13, 
+        maxLevel: 18, 
+        pool: [25, 37, 58, 63, 179, 16, 17], 
+        bossId: 18, 
+        bossLevel: 20, 
+        bossName: '체육관 관장 비상 (피죤투)', 
+        nextZoneId: 4 
+    },
+    4: { 
+        id: 4, 
+        name: '야돈의 우물 & 진철 호수', 
+        minLevel: 19, 
+        maxLevel: 25, 
+        pool: [54, 79, 129, 130, 147, 25, 2], 
+        bossId: 130, 
+        bossLevel: 28, 
+        bossName: '분노의 붉은 갸라도스', 
+        nextZoneId: null 
+    }
 };
-
 const USERS = {};
 
 function calculateStats(pokemonId, level) {
