@@ -18,21 +18,25 @@
         .font-game {
             font-family: 'Jua', sans-serif;
         }
+        /* 버튼 UI 규격 및 텍스트 자동 조절 개선 */
         .btn-ui {
-            height: 48px;
-            padding: 0 14px;
+            min-height: 52px;
+            padding: 4px 8px;
             font-weight: 700;
             border-radius: 12px;
             display: inline-flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 2px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
             border: 2px solid rgba(255, 255, 255, 0.15);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             cursor: pointer;
-            white-space: nowrap;
+            text-align: center;
+            word-break: keep-all;
+            line-height: 1.2;
         }
         .btn-ui:hover:not(:disabled) {
             transform: translateY(-2px);
@@ -145,14 +149,14 @@
                 <i class="fa-solid fa-coins text-amber-400"></i>
                 <span id="player-gold" class="font-bold text-sm text-amber-300">0 G</span>
             </div>
-            <button onclick="openPokedexModal()" class="btn-ui btn-warning text-sm">
+            <button onclick="openPokedexModal()" class="btn-ui btn-warning !flex-row text-sm px-3">
                 <i class="fa-solid fa-book-bookmark"></i>
                 <span>포획한 포켓몬 (<span id="caught-count">0</span>)</span>
             </button>
         </div>
     </header>
 
-    <!-- 메인 레이아웃 (3열 구조: 파트너 스탯 / 메인 배틀 아레나 / 접속자 목록) -->
+    <!-- 메인 레이아웃 -->
     <div class="w-full max-w-6xl grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
         
         <!-- 좌측: 내 파트너 상세 스탯 현황판 -->
@@ -213,14 +217,14 @@
         <!-- 중앙: 배틀 및 게임 플레이 영역 -->
         <main class="md:col-span-2 flex flex-col gap-4">
             
-            <!-- 원작 스타일 대각선 배틀 아레나 (상대: 우측상단 / 내 포켓몬: 좌측하단) -->
+            <!-- 원작 스타일 대각선 배틀 아레나 -->
             <div class="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden border-2 border-slate-800 shadow-2xl flex flex-col justify-between p-4 bg-gradient-to-b from-sky-900/40 via-emerald-950/30 to-emerald-900/60">
                 
                 <div class="absolute inset-0 pointer-events-none opacity-30">
                     <div class="absolute bottom-0 w-full h-28 bg-emerald-800/40 rounded-t-full transform scale-125"></div>
                 </div>
 
-                <!-- 1. 우측 상단: 상대 포켓몬 HP 카드 및 정면 일러스트 -->
+                <!-- 상대 포켓몬 HP 카드 -->
                 <div class="relative z-10 flex justify-end items-start">
                     <div id="enemy-hp-card" class="bg-slate-900/85 backdrop-blur border border-slate-700/80 rounded-xl p-2.5 shadow-lg w-48 text-left invisible">
                         <div class="flex justify-between items-center">
@@ -239,25 +243,22 @@
                     </div>
                 </div>
 
-                <!-- 2. 중앙 아레나 필드: 대각선 포켓몬 배치 -->
+                <!-- 중앙 아레나 필드 -->
                 <div class="relative z-10 flex-1 my-1">
-                    <!-- 우측 상단 야생 포켓몬 정면 일러스트 -->
                     <div id="enemy-sprite-container" class="absolute right-6 top-2 transition-all duration-300 invisible">
                         <img id="enemy-pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/19.png" class="w-28 h-28 sm:w-36 sm:h-36 object-contain filter drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]">
                     </div>
 
-                    <!-- 좌측 하단 내 파트너 포켓몬 뒷모습(Back) 스프라이트 -->
                     <div id="partner-sprite-container" class="absolute left-6 bottom-2 transition-all duration-300">
                         <img id="partner-pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/1.png" class="w-32 h-32 sm:w-40 sm:h-40 object-contain filter drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]">
                     </div>
 
-                    <!-- 던져지는 몬스터볼 -->
                     <div id="thrown-pokeball" class="hidden absolute left-12 bottom-6 w-10 h-10 z-20">
                         <img id="ball-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" class="w-full h-full object-contain filter drop-shadow-md">
                     </div>
                 </div>
 
-                <!-- 3. 좌측 하단: 내 파트너 HP 카드 -->
+                <!-- 내 파트너 HP 카드 -->
                 <div class="relative z-10 flex justify-start items-end">
                     <div class="bg-slate-900/85 backdrop-blur border border-slate-700/80 rounded-xl p-2.5 shadow-lg w-52">
                         <div class="flex justify-between items-center">
@@ -276,7 +277,7 @@
                     </div>
                 </div>
 
-                <!-- 4. 확장된 텍스트 로그 영역 (스크롤 가능, 높이 확대) -->
+                <!-- 텍스트 로그 영역 -->
                 <div class="relative z-10 bg-slate-900/95 border border-slate-800 rounded-xl p-3 min-h-[85px] max-h-[100px] overflow-y-auto mt-2">
                     <p id="game-message" class="text-xs sm:text-sm text-slate-200 font-medium leading-relaxed whitespace-pre-line">
                         반갑습니다! 파트너 포켓몬을 훈련시키거나 야생 필드를 탐색해보세요!
@@ -284,26 +285,32 @@
                 </div>
             </div>
 
-            <!-- 컨트롤 패널 -->
+            <!-- 컨트롤 패널 (버튼 텍스트 2줄 가독성 처리) -->
             <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl">
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                     <button id="btn-explore" class="btn-ui btn-primary">
-                        <i class="fa-solid fa-compass"></i> <span>탐색하기</span>
+                        <i class="fa-solid fa-compass text-sm"></i>
+                        <span>탐색하기</span>
                     </button>
                     <button id="btn-attack" class="btn-ui btn-secondary btn-disabled" disabled>
-                        <i class="fa-solid fa-hand-fist"></i> <span>공격</span>
+                        <i class="fa-solid fa-hand-fist text-sm"></i>
+                        <span>기본 공격</span>
                     </button>
                     <button id="btn-skill" class="btn-ui btn-purple btn-disabled" disabled>
-                        <i class="fa-solid fa-bolt"></i> <span id="btn-skill-text">스킬</span>
+                        <span id="btn-skill-name" class="text-[11px]">스킬</span>
+                        <span id="btn-skill-pp" class="text-[10px] opacity-80">(0/0)</span>
                     </button>
                     <button id="btn-defend" class="btn-ui btn-dark btn-disabled" disabled>
-                        <i class="fa-solid fa-shield-halved"></i> <span>방어</span>
+                        <i class="fa-solid fa-shield-halved text-sm"></i>
+                        <span>방어</span>
                     </button>
                     <button id="btn-catch" class="btn-ui btn-success btn-disabled" disabled>
-                        <i class="fa-solid fa-bullseye"></i> <span>볼 던지기</span>
+                        <i class="fa-solid fa-bullseye text-sm"></i>
+                        <span>볼 던지기</span>
                     </button>
                     <button id="btn-run" class="btn-ui btn-dark btn-disabled" disabled>
-                        <i class="fa-solid fa-person-running"></i> <span>도망치기</span>
+                        <i class="fa-solid fa-person-running text-sm"></i>
+                        <span>도망치기</span>
                     </button>
                 </div>
 
@@ -333,11 +340,22 @@
             <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl">
                 <h3 class="font-game text-amber-400 mb-3 text-sm">🏛️ 마을 및 육성 시설</h3>
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                    <button id="btn-boss" class="btn-ui btn-primary text-xs">🔥 보스 도전</button>
-                    <button id="btn-open-zone" class="btn-ui btn-purple text-xs">🗺️ 지역 이동</button>
-                    <button id="btn-open-train" class="btn-ui btn-dark text-xs">🏋️ 훈련소 (레벨업)</button>
-                    <button id="btn-open-heal" class="btn-ui btn-success text-xs">🏥 포켓몬 센터</button>
-                    <button id="btn-open-evolve" class="btn-ui btn-warning text-xs">✨ 진화 시도</button>
+                    <button id="btn-boss" class="btn-ui btn-primary">
+                        <span>🔥 보스 도전</span>
+                    </button>
+                    <button id="btn-open-zone" class="btn-ui btn-purple">
+                        <span>🗺️ 지역 이동</span>
+                    </button>
+                    <button id="btn-open-train" class="btn-ui btn-dark">
+                        <span>🏋️ 훈련소</span>
+                        <span class="text-[9px] opacity-70">(레벨업)</span>
+                    </button>
+                    <button id="btn-open-heal" class="btn-ui btn-success">
+                        <span>🏥 포켓몬 센터</span>
+                    </button>
+                    <button id="btn-open-evolve" class="btn-ui btn-warning">
+                        <span>✨ 진화 시도</span>
+                    </button>
                 </div>
             </div>
 
@@ -382,7 +400,7 @@
             </div>
 
             <div class="p-4 bg-slate-800/60 border-t border-slate-700/80 flex justify-end">
-                <button onclick="closePokedexModal()" class="btn-ui btn-dark"><span>닫기</span></button>
+                <button onclick="closePokedexModal()" class="btn-ui btn-dark !flex-row px-4"><span>닫기</span></button>
             </div>
         </div>
     </div>
@@ -392,7 +410,7 @@
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl">
             <h2 class="font-game text-xl text-amber-400 mb-2">🗺️ 지역 이동</h2>
             <div id="zone-list" class="space-y-2 my-4 max-h-60 overflow-y-auto"></div>
-            <button onclick="closeModal('zone-modal')" class="btn-ui btn-dark w-full">닫기</button>
+            <button onclick="closeModal('zone-modal')" class="btn-ui btn-dark w-full !flex-row">닫기</button>
         </div>
     </div>
 
@@ -406,8 +424,8 @@
                 <div>보유 골드: <span id="train-user-gold" class="font-bold text-slate-200">0</span> G</div>
             </div>
             <div class="flex gap-2">
-                <button id="btn-confirm-train" class="btn-ui btn-success flex-1">훈련하기</button>
-                <button onclick="closeModal('train-modal')" class="btn-ui btn-dark flex-1">닫기</button>
+                <button id="btn-confirm-train" class="btn-ui btn-success flex-1 !flex-row">훈련하기</button>
+                <button onclick="closeModal('train-modal')" class="btn-ui btn-dark flex-1 !flex-row">닫기</button>
             </div>
         </div>
     </div>
@@ -422,8 +440,8 @@
                 <div>치료 비용: <span id="heal-cost-val" class="font-bold text-amber-400">0</span> G</div>
             </div>
             <div class="flex gap-2">
-                <button id="btn-confirm-heal" class="btn-ui btn-success flex-1">치료하기</button>
-                <button onclick="closeModal('heal-modal')" class="btn-ui btn-dark flex-1">닫기</button>
+                <button id="btn-confirm-heal" class="btn-ui btn-success flex-1 !flex-row">치료하기</button>
+                <button onclick="closeModal('heal-modal')" class="btn-ui btn-dark flex-1 !flex-row">닫기</button>
             </div>
         </div>
     </div>
@@ -438,8 +456,8 @@
                 <div>필요 아이템: <span id="evolve-stone-name" class="font-bold text-emerald-400">-</span></div>
             </div>
             <div class="flex gap-2">
-                <button id="btn-confirm-evolve" class="btn-ui btn-warning flex-1">진화하기</button>
-                <button onclick="closeModal('evolve-modal')" class="btn-ui btn-dark flex-1">닫기</button>
+                <button id="btn-confirm-evolve" class="btn-ui btn-warning flex-1 !flex-row">진화하기</button>
+                <button onclick="closeModal('evolve-modal')" class="btn-ui btn-dark flex-1 !flex-row">닫기</button>
             </div>
         </div>
     </div>
