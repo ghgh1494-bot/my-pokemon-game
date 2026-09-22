@@ -20,17 +20,17 @@
         }
         .btn-ui {
             height: 48px;
-            padding: 0 16px;
+            padding: 0 14px;
             font-weight: 700;
             border-radius: 12px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
             border: 2px solid rgba(255, 255, 255, 0.15);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             cursor: pointer;
             white-space: nowrap;
         }
@@ -55,21 +55,32 @@
             box-shadow: none !important;
         }
 
+        /* 배틀 모션 애니메이션 */
+        .anim-partner-atk {
+            transform: translate(60px, -40px) scale(1.1) !important;
+        }
+        .anim-enemy-atk {
+            transform: translate(-60px, 40px) scale(1.1) !important;
+        }
+        .damage-flash {
+            filter: brightness(2.5) sepia(1) hue-rotate(-50deg) saturate(5) !important;
+        }
+
         @keyframes throwBall {
             0% { transform: translate(-50%, 0) scale(1) rotate(0deg); }
-            50% { transform: translate(-50%, -140px) scale(1.3) rotate(360deg); }
-            100% { transform: translate(-50%, -220px) scale(0.6) rotate(720deg); }
+            50% { transform: translate(120px, -120px) scale(1.3) rotate(360deg); }
+            100% { transform: translate(220px, -180px) scale(0.6) rotate(720deg); }
         }
         .animate-throw {
             animation: throwBall 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
 
         @keyframes shake {
-            0%, 100% { transform: translate(-50%, -220px) scale(0.6) rotate(0deg); }
-            20% { transform: translate(calc(-50% - 10px), -220px) scale(0.6) rotate(-20deg); }
-            40% { transform: translate(calc(-50% + 10px), -220px) scale(0.6) rotate(20deg); }
-            60% { transform: translate(calc(-50% - 5px), -220px) scale(0.6) rotate(-10deg); }
-            80% { transform: translate(calc(-50% + 5px), -220px) scale(0.6) rotate(10deg); }
+            0%, 100% { transform: translate(220px, -180px) scale(0.6) rotate(0deg); }
+            20% { transform: translate(210px, -180px) scale(0.6) rotate(-20deg); }
+            40% { transform: translate(230px, -180px) scale(0.6) rotate(20deg); }
+            60% { transform: translate(215px, -180px) scale(0.6) rotate(-10deg); }
+            80% { transform: translate(225px, -180px) scale(0.6) rotate(10deg); }
         }
         .animate-shake {
             animation: shake 0.6s ease-in-out infinite;
@@ -118,13 +129,13 @@
     </div>
 
     <!-- 헤더 -->
-    <header class="w-full max-w-5xl bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-4 shadow-xl flex flex-wrap justify-between items-center gap-3 backdrop-blur-md">
+    <header class="w-full max-w-6xl bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-4 shadow-xl flex flex-wrap justify-between items-center gap-3 backdrop-blur-md">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center border-2 border-white shadow-md">
                 <div class="w-4 h-4 rounded-full bg-white border-2 border-slate-900"></div>
             </div>
             <div>
-                <h1 class="font-game text-xl sm:text-2xl text-amber-400 tracking-wider">포켓몬 키우기</h1>
+                <h1 class="font-game text-xl sm:text-2xl text-amber-400 tracking-wider">포켓몬 육성 RPG</h1>
                 <p class="text-xs text-slate-400">위치: <span id="location-display" class="text-amber-300">마을</span> | 지역: <span id="zone-display" class="text-emerald-400">연두마을</span></p>
             </div>
         </div>
@@ -141,88 +152,133 @@
         </div>
     </header>
 
-    <!-- 메인 레이아웃 -->
-    <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
+    <!-- 메인 레이아웃 (3열 구조: 파트너 스탯 / 메인 배틀 아레나 / 접속자 목록) -->
+    <div class="w-full max-w-6xl grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
         
-        <!-- 사이드바: 접속 트레이너 -->
-        <aside class="md:col-span-1 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
-            <h3 class="font-game text-amber-400 border-b border-slate-800 pb-2 text-sm flex items-center gap-2">
-                <i class="fa-solid fa-users"></i> 접속 트레이너
-            </h3>
-            <ul id="trainer-list" class="space-y-1.5 text-xs overflow-y-auto max-h-48 md:max-h-full">
-            </ul>
+        <!-- 좌측: 내 파트너 상세 스탯 현황판 -->
+        <aside class="md:col-span-1 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between shadow-xl">
+            <div>
+                <h3 class="font-game text-amber-400 border-b border-slate-800 pb-2 text-sm flex items-center gap-2 mb-3">
+                    <i class="fa-solid fa-chart-simple"></i> 파트너 포켓몬 현황
+                </h3>
+                <div class="text-center mb-3">
+                    <div class="w-20 h-20 mx-auto bg-slate-800/60 rounded-xl p-2 border border-slate-700/60 flex items-center justify-center mb-2">
+                        <img id="status-card-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" class="max-w-full max-h-full object-contain">
+                    </div>
+                    <div id="status-card-name" class="font-game text-lg text-amber-300">이상해씨</div>
+                    <div id="status-card-level" class="text-xs text-slate-400">Lv.1 (EXP 0%)</div>
+                </div>
+
+                <div class="space-y-2 text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">❤️ HP:</span>
+                        <span id="stat-hp" class="font-bold text-emerald-400">0 / 0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">⚔️ 공격력:</span>
+                        <span id="stat-atk" class="font-bold text-slate-200">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">🛡️ 방어력:</span>
+                        <span id="stat-def" class="font-bold text-slate-200">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">⚡ 특수공격:</span>
+                        <span id="stat-spatk" class="font-bold text-slate-200">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">🔰 특수방어:</span>
+                        <span id="stat-spdef" class="font-bold text-slate-200">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">🏃 스피드:</span>
+                        <span id="stat-spd" class="font-bold text-slate-200">0</span>
+                    </div>
+                    <div class="flex justify-between border-t border-slate-800 pt-1.5">
+                        <span class="text-amber-400 font-bold">✨ 친밀도:</span>
+                        <span id="stat-affinity" class="font-bold text-amber-300">10%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-purple-400 font-bold">🌀 스킬 PP:</span>
+                        <span id="stat-pp" class="font-bold text-purple-300">10 / 10</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3 pt-3 border-t border-slate-800 text-[11px] text-slate-400 text-center">
+                * 센터 치료 시 PP와 HP가 회복됩니다.
+            </div>
         </aside>
 
-        <!-- 메인 게임 영역 -->
-        <main class="md:col-span-3 flex flex-col gap-4">
+        <!-- 중앙: 배틀 및 게임 플레이 영역 -->
+        <main class="md:col-span-2 flex flex-col gap-4">
             
-            <!-- 배틀 & 육성 메인 스테이지 -->
+            <!-- 원작 스타일 대각선 배틀 아레나 (상대: 우측상단 / 내 포켓몬: 좌측하단) -->
             <div class="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden border-2 border-slate-800 shadow-2xl flex flex-col justify-between p-4 bg-gradient-to-b from-sky-900/40 via-emerald-950/30 to-emerald-900/60">
                 
                 <div class="absolute inset-0 pointer-events-none opacity-30">
-                    <div class="absolute bottom-0 w-full h-24 bg-emerald-800/40 rounded-t-full transform scale-125"></div>
+                    <div class="absolute bottom-0 w-full h-28 bg-emerald-800/40 rounded-t-full transform scale-125"></div>
                 </div>
 
-                <!-- 상단: 상대 포켓몬 HP (전투 시 활성화) -->
-                <div class="relative z-10 flex justify-between items-start">
-                    <div id="enemy-hp-card" class="bg-slate-900/80 backdrop-blur border border-slate-700/70 rounded-xl p-3 shadow-lg max-w-[220px] sm:max-w-xs invisible">
-                        <div class="flex items-center gap-2">
-                            <span id="pokemon-name" class="font-game text-lg sm:text-xl text-amber-300">야생 포켓몬</span>
-                            <span id="pokemon-level" class="px-2 py-0.5 text-xs rounded-full bg-slate-700 text-slate-300">Lv.1</span>
+                <!-- 1. 우측 상단: 상대 포켓몬 HP 카드 및 정면 일러스트 -->
+                <div class="relative z-10 flex justify-end items-start">
+                    <div id="enemy-hp-card" class="bg-slate-900/85 backdrop-blur border border-slate-700/80 rounded-xl p-2.5 shadow-lg w-48 text-left invisible">
+                        <div class="flex justify-between items-center">
+                            <span id="pokemon-name" class="font-game text-sm text-amber-300">야생 포켓몬</span>
+                            <span id="pokemon-level" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300">Lv.1</span>
                         </div>
-                        <div class="mt-2">
-                            <div class="flex justify-between text-xs mb-1">
-                                <span class="text-slate-400">상대 HP</span>
+                        <div class="mt-1">
+                            <div class="flex justify-between text-[10px] mb-0.5">
+                                <span class="text-slate-400">HP</span>
                                 <span id="hp-text" class="text-emerald-400 font-bold">0 / 0</span>
                             </div>
-                            <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
+                            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
                                 <div id="hp-bar" class="bg-emerald-500 h-full w-full transition-all duration-300"></div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- 내 파트너 포켓몬 정보 (항상 고정 표시) -->
-                    <div class="bg-slate-900/80 backdrop-blur border border-slate-700/70 rounded-xl p-3 shadow-lg max-w-[240px] sm:max-w-xs text-right">
-                        <div class="flex items-center justify-end gap-2">
-                            <span id="partner-level" class="px-2 py-0.5 text-xs rounded-full bg-slate-700 text-amber-300 font-bold">Lv.1</span>
-                            <span id="partner-name" class="font-game text-lg sm:text-xl text-amber-300">내 포켓몬</span>
+                <!-- 2. 중앙 아레나 필드: 대각선 포켓몬 배치 -->
+                <div class="relative z-10 flex-1 my-1">
+                    <!-- 우측 상단 야생 포켓몬 정면 일러스트 -->
+                    <div id="enemy-sprite-container" class="absolute right-6 top-2 transition-all duration-300 invisible">
+                        <img id="enemy-pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/19.png" class="w-28 h-28 sm:w-36 sm:h-36 object-contain filter drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]">
+                    </div>
+
+                    <!-- 좌측 하단 내 파트너 포켓몬 뒷모습(Back) 스프라이트 -->
+                    <div id="partner-sprite-container" class="absolute left-6 bottom-2 transition-all duration-300">
+                        <img id="partner-pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/1.png" class="w-32 h-32 sm:w-40 sm:h-40 object-contain filter drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]">
+                    </div>
+
+                    <!-- 던져지는 몬스터볼 -->
+                    <div id="thrown-pokeball" class="hidden absolute left-12 bottom-6 w-10 h-10 z-20">
+                        <img id="ball-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" class="w-full h-full object-contain filter drop-shadow-md">
+                    </div>
+                </div>
+
+                <!-- 3. 좌측 하단: 내 파트너 HP 카드 -->
+                <div class="relative z-10 flex justify-start items-end">
+                    <div class="bg-slate-900/85 backdrop-blur border border-slate-700/80 rounded-xl p-2.5 shadow-lg w-52">
+                        <div class="flex justify-between items-center">
+                            <span id="partner-name" class="font-game text-sm text-amber-300">내 포켓몬</span>
+                            <span id="partner-level" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-700 text-amber-300 font-bold">Lv.1</span>
                         </div>
-                        <div class="mt-2">
-                            <div class="flex justify-between text-xs mb-1">
-                                <span id="partner-hp-text" class="text-emerald-400 font-bold">0 / 0</span>
+                        <div class="mt-1">
+                            <div class="flex justify-between text-[10px] mb-0.5">
                                 <span class="text-slate-400">내 HP</span>
+                                <span id="partner-hp-text" class="text-emerald-400 font-bold">0 / 0</span>
                             </div>
-                            <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700 mb-1.5">
+                            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-slate-700">
                                 <div id="partner-hp-bar" class="bg-emerald-500 h-full w-full transition-all duration-300"></div>
                             </div>
-                            <!-- 경험치 바 -->
-                            <div class="flex justify-between text-[10px] mb-0.5">
-                                <span id="partner-exp-text" class="text-blue-400 font-bold">EXP 0%</span>
-                                <span class="text-slate-400">경험치</span>
-                            </div>
-                            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden border border-slate-700">
-                                <div id="partner-exp-bar" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 메인 중앙: 내 파트너 포켓몬 / 상대 포켓몬 연출 -->
-                <div class="relative z-10 flex-1 flex items-center justify-center my-2">
-                    <div id="pokemon-container" class="relative transition-all duration-300 flex items-center justify-center">
-                        <!-- 메인 포켓몬 이미지 (평상시: 내 파트너, 전투시: 야생 포켓몬) -->
-                        <img id="pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" alt="Pokemon" class="w-36 h-36 sm:w-48 sm:h-48 object-contain filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
-                        
-                        <!-- 던져지는 몬스터볼 -->
-                        <div id="thrown-pokeball" class="hidden absolute left-1/2 bottom-0 w-12 h-12 z-20">
-                            <img id="ball-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" class="w-full h-full object-contain filter drop-shadow-md">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 게임 로그 콘솔 -->
-                <div class="relative z-10 bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-center min-h-[52px] flex items-center justify-center">
-                    <p id="game-message" class="text-xs sm:text-sm text-slate-200 font-medium">
+                <!-- 4. 확장된 텍스트 로그 영역 (스크롤 가능, 높이 확대) -->
+                <div class="relative z-10 bg-slate-900/95 border border-slate-800 rounded-xl p-3 min-h-[85px] max-h-[100px] overflow-y-auto mt-2">
+                    <p id="game-message" class="text-xs sm:text-sm text-slate-200 font-medium leading-relaxed whitespace-pre-line">
                         반갑습니다! 파트너 포켓몬을 훈련시키거나 야생 필드를 탐색해보세요!
                     </p>
                 </div>
@@ -286,6 +342,16 @@
             </div>
 
         </main>
+
+        <!-- 우측: 접속 트레이너 목록 -->
+        <aside class="md:col-span-1 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2 shadow-xl">
+            <h3 class="font-game text-amber-400 border-b border-slate-800 pb-2 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-users"></i> 접속 트레이너
+            </h3>
+            <ul id="trainer-list" class="space-y-1.5 text-xs overflow-y-auto max-h-48 md:max-h-full">
+            </ul>
+        </aside>
+
     </div>
 
     <!-- 포획 도감 모달 -->
@@ -334,7 +400,7 @@
     <div id="train-modal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
             <h2 class="font-game text-xl text-amber-400 mb-2">🏋️ 훈련소</h2>
-            <p class="text-xs text-slate-400 mb-4">파트너 포켓몬을 훈련시켜 경험치를 획득합니다.</p>
+            <p class="text-xs text-slate-400 mb-4">파트너 포켓몬을 훈련시켜 경험치와 친밀도를 얻습니다.</p>
             <div class="bg-slate-800 p-4 rounded-xl text-left text-xs space-y-2 mb-4">
                 <div>필요 골드: <span id="train-cost-val" class="font-bold text-amber-400">0</span> G</div>
                 <div>보유 골드: <span id="train-user-gold" class="font-bold text-slate-200">0</span> G</div>
@@ -350,7 +416,7 @@
     <div id="heal-modal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center">
             <h2 class="font-game text-xl text-emerald-400 mb-2">🏥 포켓몬 센터</h2>
-            <p class="text-xs text-slate-400 mb-4">체력과 피로도를 완전히 치료합니다.</p>
+            <p class="text-xs text-slate-400 mb-4">체력과 스킬 PP를 완전히 회복합니다.</p>
             <div class="bg-slate-800 p-4 rounded-xl text-left text-xs space-y-2 mb-4">
                 <div>현재 HP: <span id="heal-current-hp" class="font-bold text-emerald-400">0 / 0</span></div>
                 <div>치료 비용: <span id="heal-cost-val" class="font-bold text-amber-400">0</span> G</div>
