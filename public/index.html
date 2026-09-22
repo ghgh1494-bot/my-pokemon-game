@@ -243,20 +243,23 @@
                     </div>
                 </div>
 
-                <!-- 중앙 아레나 필드 -->
-                <div class="relative z-10 flex-1 my-1">
-                    <div id="enemy-sprite-container" class="absolute right-6 top-2 transition-all duration-300 invisible">
-                        <img id="enemy-pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/19.png" class="w-28 h-28 sm:w-36 sm:h-36 object-contain filter drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]">
-                    </div>
+                <!-- 2. 중앙 아레나 필드: 대각선 포켓몬 크기 및 비율 최적화 -->
+<div class="relative z-10 flex-1 my-1">
+    <!-- 우측 상단 야생/상대 포켓몬 정면 일러스트 (배경 원근감을 위해 적정 크기로 축소) -->
+    <div id="enemy-sprite-container" class="absolute right-4 top-1 sm:right-8 sm:top-2 transition-all duration-300 invisible">
+        <img id="enemy-pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/19.png" class="w-24 h-24 sm:w-32 sm:h-32 object-contain filter drop-shadow-[0_6px_6px_rgba(0,0,0,0.5)]">
+    </div>
 
-                    <div id="partner-sprite-container" class="absolute left-6 bottom-2 transition-all duration-300">
-                        <img id="partner-pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/1.png" class="w-32 h-32 sm:w-40 sm:h-40 object-contain filter drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]">
-                    </div>
+    <!-- 좌측 하단 내 파트너 포켓몬 뒷모습(Back) 스프라이트 (화면 앞쪽에 위치하므로 더 크게 확대) -->
+    <div id="partner-sprite-container" class="absolute left-2 bottom-0 sm:left-6 sm:bottom-1 transition-all duration-300">
+        <img id="partner-pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/1.png" class="w-40 h-40 sm:w-52 sm:h-52 object-contain filter drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)] transform scale-125 origin-bottom-left">
+    </div>
 
-                    <div id="thrown-pokeball" class="hidden absolute left-12 bottom-6 w-10 h-10 z-20">
-                        <img id="ball-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" class="w-full h-full object-contain filter drop-shadow-md">
-                    </div>
-                </div>
+    <!-- 던져지는 몬스터볼 -->
+    <div id="thrown-pokeball" class="hidden absolute left-16 bottom-10 w-10 h-10 z-20">
+        <img id="ball-sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" class="w-full h-full object-contain filter drop-shadow-md">
+    </div>
+</div>
 
                 <!-- 내 파트너 HP 카드 -->
                 <div class="relative z-10 flex justify-start items-end">
