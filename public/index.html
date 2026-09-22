@@ -217,7 +217,7 @@
         <!-- 중앙: 배틀 및 게임 플레이 영역 -->
         <main class="md:col-span-2 flex flex-col gap-4">
             
-            <!-- 원작 스타일 대각선 배틀 아레나 (위치 및 규격 완전 통일) -->
+            <!-- 배틀 아레나 (좌측 하단: 내 포켓몬 / 우측 상단: 상대 포켓몬) -->
             <div class="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden border-2 border-slate-800 shadow-2xl flex flex-col justify-between p-4 bg-gradient-to-b from-sky-900/40 via-emerald-950/30 to-emerald-900/60">
                 
                 <div class="absolute inset-0 pointer-events-none opacity-30">
@@ -243,16 +243,16 @@
                     </div>
                 </div>
 
-                <!-- 2. 중앙 아레나 필드: 대각선 완벽 배치 및 동일 규격 통일 -->
+                <!-- 2. 중앙 아레나 필드: 대각선 완벽 배치 및 동일 고해상도 규격 통일 -->
                 <div class="relative z-10 flex-1 w-full h-full">
-                    <!-- [우측 상단] 상대 포켓몬 (전면 일러스트) -->
-                    <div id="enemy-sprite-container" class="absolute right-6 top-2 w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center transition-all duration-300 invisible">
+                    <!-- [우측 상단] 상대 포켓몬 (정면 일러스트) -->
+                    <div id="enemy-sprite-container" class="absolute right-6 top-2 w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center transition-all duration-300 invisible">
                         <img id="enemy-pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/19.png" class="max-w-full max-h-full object-contain filter drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]">
                     </div>
 
-                    <!-- [좌측 하단] 내 파트너 포켓몬 (뒷모습) -->
-                    <div id="partner-sprite-container" class="absolute left-6 bottom-2 w-36 h-36 sm:w-44 sm:h-44 flex items-center justify-center transition-all duration-300">
-                        <img id="partner-pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/1.png" class="max-w-full max-h-full object-contain filter drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]">
+                    <!-- [좌측 하단] 내 파트너 포켓몬 (고해상도 일러스트 + 좌우반전으로 오른쪽 주시) -->
+                    <div id="partner-sprite-container" class="absolute left-6 bottom-2 w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center transition-all duration-300">
+                        <img id="partner-pokemon-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png" class="max-w-full max-h-full object-contain filter drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)] [transform:scaleX(-1)]">
                     </div>
 
                     <!-- 던져지는 몬스터볼 -->
