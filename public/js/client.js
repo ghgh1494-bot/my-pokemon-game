@@ -1,9 +1,16 @@
 let ws;
 let currentNickname = '';
 let currentUserData = null;
+let selectedBallType = 'poke';
 
 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const wsUrl = `${protocol}//${window.location.host}`;
+
+const ballImages = {
+    poke: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png',
+    super: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png',
+    hyper: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png'
+};
 
 document.getElementById('btn-login').addEventListener('click', () => {
     const input = document.getElementById('nickname-input').value.trim();
@@ -19,8 +26,6 @@ function initWebSocket(starterId) {
 
     ws.onopen = () => {
         document.getElementById('login-modal').classList.add('hidden');
-        document.getElementById('game-container').classList.remove('hidden');
-        
         ws.send(JSON.stringify({ 
             type: 'INIT', 
             nickname: currentNickname, 
@@ -34,42 +39,69 @@ function initWebSocket(starterId) {
         if (data.type === 'STATE_UPDATE') {
             currentUserData = data.user;
             updateUI(data.user);
-            if (data.msg) addLog(data.msg);
+            if (data.msg) setMessage(data.msg);
         }
 
         if (data.type === 'WILD_SPAWN') {
             currentUserData = data.user;
             updateUI(data.user);
-            document.getElementById('wild-card').classList.remove('hidden');
-            const titlePrefix = data.isBoss ? '⚠️ [보스전] ' : '';
-            document.getElementById('wild-title').innerText = `${titlePrefix}${data.wild.isShiny ? '✨' : ''}${data.wild.name} (Lv.${data.wild.level})`;
-            updateWildHp(data.wild.hp, data.wild.maxHp);
-            if (data.msg) addLog(data.msg);
+            
+            const pImg = document.getElementById('pokemon-img');
+            pImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${data.wild.id}.png`;
+            pImg.classList.remove('opacity-30', 'brightness-0');
+
+            document.getElementById('pokemon-name').innerText = `${data.wild.isShiny ? '✨' : ''}${data.wild.name}`;
+            document.getElementById('pokemon-level').innerText = `Lv.${data.wild.level}`;
+            updateWildHpUI(data.wild.hp, data.wild.maxHp);
+            
+            toggleBattleButtons(true);
+            if (data.msg) setMessage(data.msg);
         }
 
         if (data.type === 'WILD_HP_UPDATE') {
-            updateWildHp(data.wildHp, data.wildMaxHp);
+            updateWildHpUI(data.wildHp, data.wildMaxHp);
             if (data.partnerHp !== undefined) {
-                document.getElementById('partner-hp-text').innerText = `${data.partnerHp}/${data.partnerMaxHp}`;
-                const percent = (data.partnerHp / data.partnerMaxHp) * 100;
-                document.getElementById('hp-bar').style.width = `${percent}%`;
+                updatePartnerHpUI(data.partnerHp, data.partnerMaxHp);
             }
-            if (data.msg) addLog(data.msg);
+
+            // 시각적 공격 반응 애니메이션
+            const img = document.getElementById('pokemon-img');
+            img.classList.add('translate-x-2');
+            setTimeout(() => img.classList.remove('translate-x-2'), 150);
+
+            if (data.msg) setMessage(data.msg);
         }
 
-        if (data.type === 'BATTLE_END' || data.type === 'CATCH_SUCCESS') {
-            document.getElementById('wild-card').classList.add('hidden');
+        if (data.type === 'BATTLE_END') {
+            toggleBattleButtons(false);
             currentUserData = data.user;
             updateUI(data.user);
-            if (data.msg) addLog(data.msg);
+            if (data.msg) setMessage(data.msg);
+        }
+
+        if (data.type === 'CATCH_SUCCESS') {
+            playPokeballAnim(() => {
+                const img = document.getElementById('pokemon-img');
+                img.classList.add('brightness-0', 'opacity-30');
+                toggleBattleButtons(false);
+                currentUserData = data.user;
+                updateUI(data.user);
+                if (data.msg) setMessage(data.msg);
+            });
         }
 
         if (data.type === 'CATCH_FAIL') {
-            if (data.msg) addLog(data.msg);
+            playPokeballAnim(() => {
+                if (data.msg) setMessage(data.msg);
+            });
         }
 
         if (data.type === 'ZONE_INFO') {
             renderZoneList(data.zones, data.unlockedZones, data.currentZone);
+        }
+
+        if (data.type === 'POKEDEX_INFO') {
+            renderPokedexGrid(data.caughtList);
         }
 
         if (data.type === 'SIDEBAR_LIST') {
@@ -77,66 +109,129 @@ function initWebSocket(starterId) {
         }
 
         if (data.type === 'LOG') {
-            addLog(data.msg);
+            setMessage(data.msg);
         }
     };
+}
 
-    ws.onclose = () => {
-        addLog('서버와의 연결이 끊겼습니다.');
-    };
+function playPokeballAnim(callback) {
+    const ballContainer = document.getElementById('thrown-pokeball');
+    const ballSprite = document.getElementById('ball-sprite');
+    ballSprite.src = ballImages[selectedBallType] || ballImages.poke;
+
+    ballContainer.classList.remove('hidden');
+    ballContainer.classList.add('animate-throw');
+
+    setTimeout(() => {
+        ballContainer.classList.remove('animate-throw');
+        ballContainer.classList.add('animate-shake');
+
+        setTimeout(() => {
+            ballContainer.classList.remove('animate-shake');
+            ballContainer.classList.add('hidden');
+            if (callback) callback();
+        }, 1200);
+    }, 800);
 }
 
 function updateUI(user) {
-    document.getElementById('gold-display').innerText = `골드: ${user.gold.toLocaleString()}G`;
-    document.getElementById('zone-display').innerText = `지역: ${user.currentZoneName || '연두마을'}`;
-    document.getElementById('location-display').innerText = `위치: ${user.location}`;
+    document.getElementById('player-gold').innerText = `${user.gold.toLocaleString()} G`;
+    document.getElementById('zone-display').innerText = user.currentZoneName || '연두마을';
+    document.getElementById('location-display').innerText = user.location;
+    document.getElementById('caught-count').innerText = user.caughtList ? user.caughtList.length : 0;
 
     const p = user.partner;
-    document.getElementById('partner-name').innerText = `${p.isShiny ? '✨' : ''}${p.name}`;
-    document.getElementById('partner-level').innerText = `Lv. ${p.level}`;
-    document.getElementById('partner-hp-text').innerText = `${p.hp}/${p.stats.maxHp}`;
-    document.getElementById('partner-exp-text').innerText = `${p.exp}/${p.maxExp}`;
-    
-    const hpPercent = (p.hp / p.stats.maxHp) * 100;
-    const expPercent = (p.exp / p.maxExp) * 100;
-    
-    document.getElementById('hp-bar').style.width = `${hpPercent}%`;
-    document.getElementById('exp-bar').style.width = `${expPercent}%`;
-    document.getElementById('fatigue-val').innerText = p.fatigue;
-    document.getElementById('affinity-val').innerText = p.affinity.toFixed(1);
+    document.getElementById('partner-name').innerText = p.name;
+    document.getElementById('partner-level').innerText = `Lv.${p.level}`;
+    document.getElementById('btn-skill-text').innerText = p.skillName || '스킬';
+    updatePartnerHpUI(p.hp, p.stats.maxHp);
+
+    document.getElementById('count-poke').innerText = user.balls.poke || 0;
+    document.getElementById('count-super').innerText = user.balls.super || 0;
+    document.getElementById('count-hyper').innerText = user.balls.hyper || 0;
 
     if (user.location === '마을') {
-        document.getElementById('wild-card').classList.add('hidden');
+        toggleBattleButtons(false);
+        const img = document.getElementById('pokemon-img');
+        img.classList.add('opacity-30');
     }
 }
 
-function updateWildHp(hp, maxHp) {
-    document.getElementById('wild-hp-text').innerText = `${hp}/${maxHp}`;
-    const percent = Math.max(0, (hp / maxHp) * 100);
-    document.getElementById('wild-hp-bar').style.width = `${percent}%`;
+function updateWildHpUI(hp, maxHp) {
+    document.getElementById('hp-text').innerText = `${hp} / ${maxHp}`;
+    const pct = Math.max(0, (hp / maxHp) * 100);
+    const hpBar = document.getElementById('hp-bar');
+    hpBar.style.width = `${pct}%`;
+
+    if (pct > 50) hpBar.className = "bg-emerald-500 h-full transition-all duration-300";
+    else if (pct > 20) hpBar.className = "bg-amber-500 h-full transition-all duration-300";
+    else hpBar.className = "bg-red-500 h-full transition-all duration-300";
+}
+
+function updatePartnerHpUI(hp, maxHp) {
+    document.getElementById('partner-hp-text').innerText = `${hp} / ${maxHp}`;
+    const pct = Math.max(0, (hp / maxHp) * 100);
+    const hpBar = document.getElementById('partner-hp-bar');
+    hpBar.style.width = `${pct}%`;
+}
+
+function toggleBattleButtons(inBattle) {
+    const btnExplore = document.getElementById('btn-explore');
+    const battleBtns = ['btn-attack', 'btn-skill', 'btn-defend', 'btn-catch', 'btn-run'];
+
+    if (inBattle) {
+        btnExplore.classList.add('btn-disabled');
+        btnExplore.disabled = true;
+        battleBtns.forEach(id => {
+            const b = document.getElementById(id);
+            b.classList.remove('btn-disabled');
+            b.disabled = false;
+        });
+    } else {
+        btnExplore.classList.remove('btn-disabled');
+        btnExplore.disabled = false;
+        battleBtns.forEach(id => {
+            const b = document.getElementById(id);
+            b.classList.add('btn-disabled');
+            b.disabled = true;
+        });
+    }
+}
+
+function selectBall(type) {
+    selectedBallType = type;
+    ['poke', 'super', 'hyper'].forEach(b => {
+        const btn = document.getElementById(`ball-select-${b}`);
+        if (b === type) {
+            btn.className = "px-3 py-1.5 rounded-lg border border-red-500 bg-red-500/20 text-xs font-bold flex items-center gap-1.5 ring-2 ring-red-500";
+        } else {
+            btn.className = "px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-xs font-bold flex items-center gap-1.5";
+        }
+    });
+}
+
+function setMessage(msg) {
+    document.getElementById('game-message').innerText = msg;
 }
 
 function renderZoneList(zones, unlockedZones, currentZone) {
-    const container = document.getElementById('zone-list');
-    container.innerHTML = '';
-
+    const list = document.getElementById('zone-list');
+    list.innerHTML = '';
     zones.forEach(z => {
         const isUnlocked = unlockedZones.includes(z.id);
         const isCurrent = currentZone === z.id;
-
         const div = document.createElement('div');
-        div.className = `zone-item ${!isUnlocked ? 'locked' : ''}`;
-        
+        div.className = `p-3 rounded-xl border flex justify-between items-center ${isUnlocked ? 'bg-slate-800 border-slate-700' : 'bg-slate-900 border-slate-800 opacity-50'}`;
         div.innerHTML = `
             <div>
-                <div class="zone-name">${z.name} ${isCurrent ? '📌(현재)' : ''}</div>
-                <div class="zone-sub">추천 레벨: Lv.${z.minLevel}~${z.maxLevel} | 보스: ${z.bossName}</div>
+                <div class="text-sm font-bold text-slate-200">${z.name} ${isCurrent ? '📌' : ''}</div>
+                <div class="text-xs text-slate-400">Lv.${z.minLevel}~${z.maxLevel} | 보스: ${z.bossName}</div>
             </div>
-            <button class="btn-zone-select" ${(!isUnlocked || isCurrent) ? 'disabled' : ''} onclick="changeZone(${z.id})">
-                ${!isUnlocked ? '🔒 잠김' : (isCurrent ? '이동됨' : '이동')}
+            <button onclick="changeZone(${z.id})" ${(!isUnlocked || isCurrent) ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg text-xs font-bold ${isUnlocked && !isCurrent ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-400'}">
+                ${!isUnlocked ? '🔒' : (isCurrent ? '현재' : '이동')}
             </button>
         `;
-        container.appendChild(div);
+        list.appendChild(div);
     });
 }
 
@@ -145,59 +240,75 @@ function changeZone(zoneId) {
     closeModal('zone-modal');
 }
 
+function renderPokedexGrid(caughtList) {
+    const grid = document.getElementById('pokedex-grid');
+    document.getElementById('modal-total-count').innerText = caughtList ? caughtList.length : 0;
+
+    if (!caughtList || caughtList.length === 0) {
+        grid.innerHTML = `
+            <div class="col-span-full flex flex-col items-center justify-center p-8 text-slate-500">
+                <i class="fa-solid fa-box-open text-4xl mb-3 opacity-50"></i>
+                <p class="text-sm">포획한 포켓몬이 없습니다.</p>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = caughtList.map(p => `
+        <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-3 flex flex-col items-center shadow-md">
+            <div class="w-20 h-20 bg-slate-900/60 rounded-lg p-2 flex items-center justify-center mb-2">
+                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png" class="max-w-full max-h-full object-contain filter drop-shadow">
+            </div>
+            <span class="text-xs text-slate-400 font-mono">No.${String(p.id).padStart(3, '0')}</span>
+            <h3 class="font-game text-sm text-amber-300 mt-0.5">${p.isShiny ? '✨' : ''}${p.name}</h3>
+            <span class="text-[10px] text-slate-400 mt-1">Lv.${p.level}</span>
+        </div>
+    `).join('');
+}
+
 function renderTrainerList(users) {
     const list = document.getElementById('trainer-list');
-    list.innerHTML = '';
-    users.forEach(u => {
-        const li = document.createElement('li');
-        li.innerText = `${u.nickname} (${u.zoneName}) - CP:${u.power}`;
-        list.appendChild(li);
-    });
+    list.innerHTML = users.map(u => `
+        <li class="flex justify-between items-center text-slate-300">
+            <span>${u.nickname}</span>
+            <span class="text-[10px] text-emerald-400">${u.zoneName}</span>
+        </li>
+    `).join('');
 }
 
-function addLog(msg) {
-    const logBox = document.getElementById('game-log');
-    const p = document.createElement('p');
-    p.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-    logBox.appendChild(p);
-    logBox.scrollTop = logBox.scrollHeight;
+function openPokedexModal() {
+    ws.send(JSON.stringify({ type: 'REQ_POKEDEX_INFO' }));
+    document.getElementById('pokedex-modal').classList.remove('hidden');
 }
 
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.add('hidden');
+function closePokedexModal() {
+    document.getElementById('pokedex-modal').classList.add('hidden');
 }
 
-// 모달 및 버튼 바인딩
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+
+// 버튼 액션 바인딩
+document.getElementById('btn-explore').addEventListener('click', () => ws.send(JSON.stringify({ type: 'EXPLORE_FIELD' })));
+document.getElementById('btn-attack').addEventListener('click', () => ws.send(JSON.stringify({ type: 'BATTLE_ACTION', action: 'ATTACK' })));
+document.getElementById('btn-skill').addEventListener('click', () => ws.send(JSON.stringify({ type: 'BATTLE_ACTION', action: 'SKILL' })));
+document.getElementById('btn-defend').addEventListener('click', () => ws.send(JSON.stringify({ type: 'BATTLE_ACTION', action: 'DEFEND' })));
+document.getElementById('btn-catch').addEventListener('click', () => ws.send(JSON.stringify({ type: 'CATCH_ATTEMPT', ballType: selectedBallType })));
+document.getElementById('btn-run').addEventListener('click', () => ws.send(JSON.stringify({ type: 'BATTLE_ACTION', action: 'RUN' })));
+
+document.getElementById('btn-boss').addEventListener('click', () => ws.send(JSON.stringify({ type: 'CHALLENGE_BOSS' })));
 document.getElementById('btn-open-zone').addEventListener('click', () => {
     ws.send(JSON.stringify({ type: 'REQ_ZONE_INFO' }));
     document.getElementById('zone-modal').classList.remove('hidden');
 });
-
-document.getElementById('btn-boss').addEventListener('click', () => {
-    ws.send(JSON.stringify({ type: 'CHALLENGE_BOSS' }));
-});
-
-document.getElementById('btn-explore').addEventListener('click', () => {
-    ws.send(JSON.stringify({ type: 'EXPLORE_FIELD' }));
-});
-
-document.getElementById('btn-attack').addEventListener('click', () => {
-    ws.send(JSON.stringify({ type: 'ATTACK_WILD' }));
-});
-
-document.getElementById('btn-catch').addEventListener('click', () => {
-    ws.send(JSON.stringify({ type: 'CATCH_ATTEMPT', ballType: 'poke' }));
-});
-
 document.getElementById('btn-open-train').addEventListener('click', () => {
     if (!currentUserData) return;
-    const level = currentUserData.partner.level;
-    const cost = Math.floor(1000 * Math.pow(level, 1.2));
+    const cost = Math.floor(1000 * Math.pow(currentUserData.partner.level, 1.2));
     document.getElementById('train-cost-val').innerText = cost.toLocaleString();
     document.getElementById('train-user-gold').innerText = currentUserData.gold.toLocaleString();
     document.getElementById('train-modal').classList.remove('hidden');
 });
-
 document.getElementById('btn-open-heal').addEventListener('click', () => {
     if (!currentUserData) return;
     const p = currentUserData.partner;
@@ -206,22 +317,8 @@ document.getElementById('btn-open-heal').addEventListener('click', () => {
     document.getElementById('heal-cost-val').innerText = healCost.toLocaleString();
     document.getElementById('heal-modal').classList.remove('hidden');
 });
+document.getElementById('btn-open-evolve').addEventListener('click', () => document.getElementById('evolve-modal').classList.remove('hidden'));
 
-document.getElementById('btn-open-evolve').addEventListener('click', () => {
-    document.getElementById('evolve-modal').classList.remove('hidden');
-});
-
-document.getElementById('btn-confirm-train').addEventListener('click', () => {
-    ws.send(JSON.stringify({ type: 'TRAIN' }));
-    closeModal('train-modal');
-});
-
-document.getElementById('btn-confirm-heal').addEventListener('click', () => {
-    ws.send(JSON.stringify({ type: 'HEAL' }));
-    closeModal('heal-modal');
-});
-
-document.getElementById('btn-confirm-evolve').addEventListener('click', () => {
-    ws.send(JSON.stringify({ type: 'EVOLVE' }));
-    closeModal('evolve-modal');
-});
+document.getElementById('btn-confirm-train').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'TRAIN' })); closeModal('train-modal'); });
+document.getElementById('btn-confirm-heal').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'HEAL' })); closeModal('heal-modal'); });
+document.getElementById('btn-confirm-evolve').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'EVOLVE' })); closeModal('evolve-modal'); });
