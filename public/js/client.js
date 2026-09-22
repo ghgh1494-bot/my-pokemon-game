@@ -56,7 +56,14 @@ function initWebSocket(starterId) {
             enemyContainer.classList.remove('invisible');
             enemyImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${data.wild.id}.png`;
 
-            document.getElementById('pokemon-name').innerText = `${data.wild.isShiny ? '✨' : ''}${data.wild.name}`;
+            // ✨ 이로치 시 시각적 후광 연출 부착
+            if (data.wild.isShiny) {
+                enemyImg.classList.add('shiny-glow');
+            } else {
+                enemyImg.classList.remove('shiny-glow');
+            }
+
+            document.getElementById('pokemon-name').innerText = `${data.wild.isShiny ? '✨ ' : ''}${data.wild.name}`;
             document.getElementById('pokemon-level').innerText = `Lv.${data.wild.level}`;
             updateWildHpUI(data.wild.hp, data.wild.maxHp);
             
