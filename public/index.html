@@ -12,41 +12,110 @@
         <div class="modal-content">
             <h2>트레이너 접속</h2>
             <input type="text" id="nickname-input" placeholder="닉네임 입력..." maxlength="10">
-            <button id="btn-login">접속하기</button>
+            <h3 style="margin-top: 15px; margin-bottom: 10px; font-size: 15px;">스타팅 포켓몬 선택</h3>
+            <div class="starter-select-grid">
+                <label class="starter-card"><input type="radio" name="starter" value="1" checked> 🍃 이상해씨</label>
+                <label class="starter-card"><input type="radio" name="starter" value="4"> 🔥 파이리</label>
+                <label class="starter-card"><input type="radio" name="starter" value="7"> 💧 꼬부기</label>
+                <label class="starter-card"><input type="radio" name="starter" value="25"> ⚡ 피카츄</label>
+            </div>
+            <button id="btn-login">모험 시작하기</button>
         </div>
     </div>
 
+    <!-- 지역 이동 모달 -->
+    <div id="zone-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>🗺️ 지역 이동 (포켓몬 골드)</h2>
+            <p>탐험할 지역을 선택하세요.</p>
+            <div id="zone-list" class="zone-list-container">
+                <!-- JS에서 동적 생성 -->
+            </div>
+            <div class="modal-btn-group" style="margin-top: 15px;">
+                <button onclick="closeModal('zone-modal')" class="btn-close">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 훈련소 모달 -->
+    <div id="train-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>🏋️ 훈련소</h2>
+            <p id="train-info-text">파트너 포켓몬을 훈련시켜 경험치를 얻습니다.</p>
+            <div class="modal-info-box">
+                <div>필요 골드: <span id="train-cost-val">0</span> G</div>
+                <div>보유 골드: <span id="train-user-gold">0</span> G</div>
+            </div>
+            <div class="modal-btn-group">
+                <button id="btn-confirm-train" class="btn-primary">훈련하기</button>
+                <button onclick="closeModal('train-modal')" class="btn-close">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 포켓몬 센터 모달 -->
+    <div id="heal-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>🏥 포켓몬 센터</h2>
+            <p>포켓몬의 체력을 완전히 회복하고 피로도를 0으로 만듭니다.</p>
+            <div class="modal-info-box">
+                <div>현재 HP: <span id="heal-current-hp">0 / 0</span></div>
+                <div>치료 비용: <span id="heal-cost-val">0</span> G</div>
+            </div>
+            <div class="modal-btn-group">
+                <button id="btn-confirm-heal" class="btn-primary">치료하기</button>
+                <button onclick="closeModal('heal-modal')" class="btn-close">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 진화 모달 -->
+    <div id="evolve-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>✨ 진화의 성소</h2>
+            <p id="evolve-desc">포켓몬을 진화시킵니다.</p>
+            <div class="modal-info-box">
+                <div>필요 아이템: <span id="evolve-stone-name">-</span></div>
+                <div>보유 수량: <span id="evolve-stone-count">0</span> 개</div>
+            </div>
+            <div class="modal-btn-group">
+                <button id="btn-confirm-evolve" class="btn-primary">진화하기</button>
+                <button onclick="closeModal('evolve-modal')" class="btn-close">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨테이너 -->
     <div class="container hidden" id="game-container">
         <header>
             <h1>🎮 POKÉMON ONLINE</h1>
             <div id="user-info">
                 <span id="gold-display">골드: 0G</span>
+                <span id="zone-display">지역: 1. 연두마을</span>
                 <span id="location-display">위치: 마을</span>
             </div>
         </header>
 
         <div class="main-layout">
-            <!-- 좌측: 접속 중인 트레이너 목록 -->
             <aside class="sidebar">
                 <h3>접속 트레이너</h3>
                 <ul id="trainer-list"></ul>
             </aside>
 
-            <!-- 중앙: 게임 메인 필드 -->
             <main class="game-view">
-                <!-- 파트너 포켓몬 정보 -->
+                <!-- 파트너 카드 -->
                 <div class="card" id="partner-card">
                     <h3>내 파트너 포켓몬</h3>
                     <div class="partner-info">
                         <span id="partner-name">파이리</span>
-                        <span id="partner-level">Lv. 5</span>
+                        <span id="partner-level">Lv. 1</span>
                     </div>
                     <div class="progress-bar-container">
-                        <label>HP</label>
+                        <label>내 HP: <span id="partner-hp-text">0/0</span></label>
                         <div class="progress-bar"><div id="hp-bar" style="width: 100%;"></div></div>
                     </div>
                     <div class="progress-bar-container">
-                        <label>EXP</label>
+                        <label>EXP: <span id="partner-exp-text">0/0</span></label>
                         <div class="progress-bar"><div id="exp-bar" style="width: 0%;"></div></div>
                     </div>
                     <div class="stats-grid">
@@ -55,11 +124,11 @@
                     </div>
                 </div>
 
-                <!-- 야생 전투 영역 -->
+                <!-- 야생 / 보스 포켓몬 카드 -->
                 <div class="card hidden" id="wild-card">
                     <h3 id="wild-title">야생 포켓몬 출현!</h3>
                     <div class="progress-bar-container">
-                        <label>야생 HP</label>
+                        <label>상대 HP: <span id="wild-hp-text">0/0</span></label>
                         <div class="progress-bar"><div id="wild-hp-bar" style="width: 100%;"></div></div>
                     </div>
                     <div class="action-buttons">
@@ -68,18 +137,20 @@
                     </div>
                 </div>
 
-                <!-- 마을 행동 버튼 -->
+                <!-- 마을 메뉴 -->
                 <div class="card" id="town-card">
-                    <h3>마을 시설</h3>
+                    <h3>마을 및 탐험 시설</h3>
                     <div class="action-buttons">
                         <button id="btn-explore">야생 필드 탐험</button>
-                        <button id="btn-train">훈련소 (레벨업)</button>
-                        <button id="btn-heal">포켓몬 센터 (회복)</button>
-                        <button id="btn-evolve">진화 시도</button>
+                        <button id="btn-boss" style="background: #e74c3c;">🔥 보스 도전</button>
+                        <button id="btn-open-zone" style="background: #8e44ad;">🗺️ 지역 이동</button>
+                        <button id="btn-open-train">훈련소 (레벨업)</button>
+                        <button id="btn-open-heal">포켓몬 센터 (회복)</button>
+                        <button id="btn-open-evolve">진화 시도</button>
                     </div>
                 </div>
 
-                <!-- 이벤트 로그 -->
+                <!-- 로그 -->
                 <div class="card" id="log-card">
                     <div id="game-log"></div>
                 </div>
