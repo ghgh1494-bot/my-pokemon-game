@@ -473,15 +473,16 @@ document.getElementById('btn-open-heal').addEventListener('click', () => {
     document.getElementById('heal-modal').classList.remove('hidden');
 });
 
+// [교체할 시작 위치: btn-open-evolve 이벤트 시작점]
 document.getElementById('btn-open-evolve').addEventListener('click', () => {
     if (inBattleState) {
         alert('전투 중에는 진화를 시도할 수 없습니다!');
         return;
     }
-    if (!currentUserData) return;
+    if (!currentUserData || !currentUserData.partner) return;
     const p = currentUserData.partner;
     
-    // 포켓몬 진화 정보 목록
+    // 포켓몬 진화 정보 목록 (1세대 전체 지원)
     const evoInfo = {
         1:   { reqLv: 16, reqAff: '없음', stone: '없음' },
         2:   { reqLv: 32, reqAff: '100%', stone: '리프의 돌' },
@@ -514,11 +515,33 @@ document.getElementById('btn-open-evolve').addEventListener('click', () => {
         148: { reqLv: 55, reqAff: '없음', stone: '없음' }
     }[p.id] || { reqLv: 99, reqAff: '최대', stone: '최종 진화 완료' };
 
-    document.getElementById('evolve-req-level').innerText = evoInfo.reqLv === 99 ? '최종 진화' : `Lv.${evoInfo.reqLv}`;
-    document.getElementById('evolve-req-affinity').innerText = evoInfo.reqAff;
-    document.getElementById('evolve-stone-name').innerText = evoInfo.stone;
+    const reqLvEl = document.getElementById('evolve-req-level');
+    const reqAffEl = document.getElementById('evolve-req-affinity');
+    const stoneEl = document.getElementById('evolve-stone-name');
+
+    if (reqLvEl) reqLvEl.innerText = evoInfo.reqLv === 99 ? '최종 진화' : `Lv.${evoInfo.reqLv}`;
+    if (reqAffEl) reqAffEl.innerText = evoInfo.reqAff;
+    if (stoneEl) stoneEl.innerText = evoInfo.stone;
+
     document.getElementById('evolve-modal').classList.remove('hidden');
 });
-document.getElementById('btn-confirm-train').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'TRAIN' })); closeModal('train-modal'); });
-document.getElementById('btn-confirm-heal').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'HEAL' })); closeModal('heal-modal'); });
-document.getElementById('btn-confirm-evolve').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'EVOLVE' })); closeModal('evolve-modal'); });
+
+// 모달 내부 확정 버튼 핸들러
+document.getElementById('btn-confirm-train').addEventListener('click', () => { 
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'TRAIN' })); 
+    closeModal('train-modal'); 
+});
+
+document.getElementById('btn-confirm-heal').addEventListener('click', () => { 
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'HEAL' })); 
+    closeModal('heal-modal'); 
+});
+
+// 🔥 진화 확정 버튼 안전 처리
+document.getElementById('btn-confirm-evolve').addEventListener('click', () => { 
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'EVOLVE' })); 
+    }
+    closeModal('evolve-modal'); 
+});
+// [교체 끝]
