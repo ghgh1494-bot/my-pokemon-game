@@ -143,7 +143,7 @@ const POKEMON_DB = {
     97:  { name: '슬리퍼',   type: 'psychic', skillName: '🔮 사이코키네시스', maxPp: 10, reqLevel: 99, reqAffinity: 0, nextEvo: null, reqStone: null, baseStats: { hp: 85, atk: 73, def: 70, spAtk: 73, spDef: 115, spd: 67 } },
     98:  { name: '크랩',     type: 'water',  skillName: '💧 거품',       maxPp: 20, reqLevel: 28, reqAffinity: 0, nextEvo: 99, reqStone: null, baseStats: { hp: 30, atk: 105, def: 90, spAtk: 25, spDef: 25, spd: 50 } },
     99:  { name: '킹크랩',   type: 'water',  skillName: '💧 집게해머',   maxPp: 8,  reqLevel: 99, reqAffinity: 0, nextEvo: null, reqStone: null, baseStats: { hp: 55, atk: 130, def: 115, spAtk: 50, spDef: 50, spd: 75 } },
-    100: { name: '아라리',   type: 'electric', skillName: '⚡ 스파크',   maxPp: 20, reqLevel: 30, reqAffinity: 0, nextEvo: 101, reqStone: null, baseStats: { hp: 40, atk: 30, def: 50, spAtk: 55, spDef: 55, spd: 100 } },
+    100: { name: '찌리리공', type: 'electric', skillName: '⚡ 스파크',   maxPp: 20, reqLevel: 30, reqAffinity: 0, nextEvo: 101, reqStone: null, baseStats: { hp: 40, atk: 30, def: 50, spAtk: 55, spDef: 55, spd: 100 } },
 
     // 101~120
     101: { name: '붐볼',     type: 'electric', skillName: '⚡ 자폭',     maxPp: 5,  reqLevel: 99, reqAffinity: 0, nextEvo: null, reqStone: null, baseStats: { hp: 60, atk: 50, def: 70, spAtk: 80, spDef: 80, spd: 150 } },
@@ -295,501 +295,502 @@ const ZONES = {
     }
 };
 
-const USERS = {};
+const users = {};
 
 function calculateStats(pokemonId, level) {
     const base = POKEMON_DB[pokemonId].baseStats;
-    const maxHp = Math.floor(((2 * base.hp) * level) / 100) + level + 10;
-    const atk = Math.floor(((2 * base.atk) * level) / 100) + 5;
-    const def = Math.floor(((2 * base.def) * level) / 100) + 5;
-    const spAtk = Math.floor(((2 * base.spAtk) * level) / 100) + 5;
-    const spDef = Math.floor(((2 * base.spDef) * level) / 100) + 5;
-    const spd = Math.floor(((2 * base.spd) * level) / 100) + 5;
-    return { maxHp, atk, def, spAtk, spDef, spd };
+    return {
+        maxHp: Math.floor((base.hp * 2 * level) / 100) + level + 10,
+        atk: Math.floor((base.atk * 2 * level) / 100) + 5,
+        def: Math.floor((base.def * 2 * level) / 100) + 5,
+        spAtk: Math.floor((base.spAtk * 2 * level) / 100) + 5,
+        spDef: Math.floor((base.spDef * 2 * level) / 100) + 5,
+        spd: Math.floor((base.spd * 2 * level) / 100) + 5
+    };
+}
+
+function calculateCP(stats) {
+    return Math.floor((stats.maxHp * 1.5) + stats.atk + stats.def + stats.spAtk + stats.spDef + stats.spd);
 }
 
 function checkNeedsHeal(user) {
     return user.partner.hp <= 0;
 }
 
+function broadcastUserList() {
+    const list = Object.values(users).map(u => ({
+        id: u.id,
+        nickname: u.nickname,
+        partnerName: u.partner.name,
+        partnerLevel: u.partner.level,
+        cp: calculateCP(u.partner.stats),
+        zoneName: u.currentZoneName
+    }));
+
+    const msg = JSON.stringify({ type: 'SIDEBAR_LIST', users: list });
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(msg);
+        }
+    });
+}
+
 wss.on('connection', (ws) => {
     let userId = null;
 
-    ws.on('message', (raw) => {
+    ws.on('message', (message) => {
+        let data;
         try {
-            const data = JSON.parse(raw);
+            data = JSON.parse(message);
+        } catch (e) {
+            return;
+        }
 
-            if (data.type === 'INIT') {
-                userId = data.nickname;
-                const starterId = POKEMON_DB[data.starterId] ? data.starterId : 4;
+        if (data.type === 'INIT') {
+            userId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
+            const starterId = parseInt(data.starterId) || 1;
+            const starterInfo = POKEMON_DB[starterId];
+            const initialStats = calculateStats(starterId, 5);
 
-                if (!USERS[userId]) {
-                    const defaultStats = calculateStats(starterId, 1);
-                    const dbInfo = POKEMON_DB[starterId];
-                    USERS[userId] = {
-                        nickname: userId,
-                        gold: 5000,
-                        currentZone: 1,
-                        unlockedZones: [1],
-                        caughtList: [],
-                        balls: { poke: 10, super: 3, hyper: 1 },
-                        inventory: { '불꽃의 돌': 1, '물의 돌': 1, '리프의 돌': 1, '천둥의 돌': 1 },
-                        partner: {
-                            id: starterId,
-                            name: dbInfo.name,
-                            type: dbInfo.type,
-                            skillName: dbInfo.skillName,
-                            level: 1,
-                            exp: 0,
-                            maxExp: 50,
-                            hp: defaultStats.maxHp,
-                            pp: dbInfo.maxPp,
-                            maxPp: dbInfo.maxPp,
-                            affinity: 10.0,
-                            stats: defaultStats
-                        },
-                        location: '마을',
-                        activeWild: null
-                    };
-                }
-                const user = USERS[userId];
-                user.currentZoneName = ZONES[user.currentZone].name;
-                ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user }));
-                broadcastUserList();
-            }
-
-            const user = USERS[userId];
-            if (!user) return;
-
-            if (data.type === 'REQ_ZONE_INFO') {
-                ws.send(JSON.stringify({
-                    type: 'ZONE_INFO',
-                    zones: Object.values(ZONES),
-                    unlockedZones: user.unlockedZones,
-                    currentZone: user.currentZone
-                }));
-            }
-
-            if (data.type === 'REQ_POKEDEX_INFO') {
-                ws.send(JSON.stringify({
-                    type: 'POKEDEX_INFO',
-                    caughtList: user.caughtList
-                }));
-            }
-
-            if (data.type === 'CHANGE_ZONE') {
-                const targetZoneId = parseInt(data.zoneId, 10);
-
-                if (user.activeWild) {
-                    ws.send(JSON.stringify({
-                        type: 'LOG',
-                        msg: '⚠️ 야생 포켓몬과 전투 중에는 지역을 이동할 수 없습니다!'
-                    }));
-                    return;
-                }
-
-                const unlocked = user.unlockedZones.map(id => parseInt(id, 10));
-                if (unlocked.includes(targetZoneId) && ZONES[targetZoneId]) {
-                    user.currentZone = targetZoneId;
-                    user.currentZoneName = ZONES[targetZoneId].name;
-                    user.location = '마을';
-                    user.activeWild = null;
-
-                    ws.send(JSON.stringify({
-                        type: 'STATE_UPDATE',
-                        user: user,
-                        msg: `🗺️ [${user.currentZoneName}](으)로 이동했습니다.`
-                    }));
-                    broadcastUserList();
-                } else {
-                    ws.send(JSON.stringify({
-                        type: 'LOG',
-                        msg: '❌ 아직 해금되지 않은 지역입니다. 이전 지역 보스를 먼저 처치하세요!'
-                    }));
-                }
-            }
-
-            if (data.type === 'EXPLORE_FIELD') {
-                if (checkNeedsHeal(user)) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없습니다! 센터에서 치료하세요.' }));
-                    return;
-                }
-
-                user.location = '필드';
-                const zone = ZONES[user.currentZone];
-                const wildId = zone.pool[Math.floor(Math.random() * zone.pool.length)];
-                
-                // ✨ 이로치(Shiny) 출현 확률 1% (1/100)로 대폭 상향!
-                const isShiny = Math.random() < 0.01; 
-                const wildLevel = Math.floor(Math.random() * (zone.maxLevel - zone.minLevel + 1)) + zone.minLevel;
-                const wildStats = calculateStats(wildId, wildLevel);
-
-                user.activeWild = {
-                    id: wildId,
-                    name: POKEMON_DB[wildId].name,
-                    type: POKEMON_DB[wildId].type,
-                    level: wildLevel,
-                    hp: wildStats.maxHp,
-                    maxHp: wildStats.maxHp,
-                    isShiny: isShiny,
-                    isBoss: false,
-                    stats: wildStats
-                };
-
-                ws.send(JSON.stringify({
-                    type: 'WILD_SPAWN',
-                    wild: user.activeWild,
-                    user: user,
-                    msg: isShiny 
-                        ? `✨✨ [희귀 발견!] 이로치 ${user.activeWild.name}(Lv.${wildLevel})이(가) 나타났다! ✨✨`
-                        : `야생의 ${user.activeWild.name}(Lv.${wildLevel})이(가) 나타났다!`
-                }));
-            }
-
-            if (data.type === 'CHALLENGE_BOSS') {
-                if (checkNeedsHeal(user)) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없습니다! 센터에서 치료 후 도전하세요.' }));
-                    return;
-                }
-
-                const zone = ZONES[user.currentZone];
-                user.location = '보스전';
-                const bossStats = calculateStats(zone.bossId, zone.bossLevel);
-                bossStats.maxHp = Math.floor(bossStats.maxHp * 1.5);
-
-                user.activeWild = {
-                    id: zone.bossId,
-                    name: zone.bossName,
-                    type: POKEMON_DB[zone.bossId].type,
-                    level: zone.bossLevel,
-                    hp: bossStats.maxHp,
-                    maxHp: bossStats.maxHp,
-                    isShiny: false,
-                    isBoss: true,
-                    stats: bossStats
-                };
-
-                ws.send(JSON.stringify({
-                    type: 'WILD_SPAWN',
-                    wild: user.activeWild,
-                    user: user,
-                    msg: `🔥 [보스전] ${zone.name}의 보스 [${zone.bossName}](Lv.${zone.bossLevel}) 출현!`
-                }));
-            }
-
-            if (data.type === 'BATTLE_ACTION') {
-                if (!user.activeWild) return;
-                if (checkNeedsHeal(user)) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 전투 불능 상태입니다. 센터에서 치료하세요!' }));
-                    return;
-                }
-
-                const action = data.action;
-                let damageToWild = 0;
-                let isDefending = false;
-                let actionMsg = '';
-
-                // 속성 상성 계산 적용
-                const playerType = user.partner.type || 'normal';
-                const enemyType = user.activeWild.type || 'normal';
-                const typeMult = getTypeEffectiveness(playerType, enemyType);
-                let typeMsg = '';
-                if (typeMult > 1.2) typeMsg = ' (💥 효과가 뛰어났다!)';
-                else if (typeMult < 0.8) typeMsg = ' (🌧️ 효과가 별로인 듯하다...)';
-
-                if (action === 'RUN') {
-                    if (user.activeWild.isBoss) {
-                        ws.send(JSON.stringify({ type: 'LOG', msg: '🚫 보스전에서는 도망칠 수 없습니다!' }));
-                        return;
-                    }
-                    if (Math.random() < 0.75) {
-                        user.activeWild = null;
-                        user.location = '마을';
-                        ws.send(JSON.stringify({
-                            type: 'BATTLE_END',
-                            user: user,
-                            msg: '🏃 무사히 도망쳤습니다!'
-                        }));
-                        return;
-                    } else {
-                        actionMsg = '🏃 도망치는 데 실패했습니다!';
-                    }
-                } else if (action === 'ATTACK') {
-                    const affinityBonus = 1.0 + (user.partner.affinity / 200.0);
-                    const playerAtk = user.partner.stats.atk * affinityBonus;
-                    const wildDef = user.activeWild.stats.def;
-                    damageToWild = Math.max(5, Math.floor(((playerAtk * 1.5) - (wildDef * 0.4)) * typeMult));
-                    user.activeWild.hp -= damageToWild;
-                    actionMsg = `⚔️ [일반 공격] 상대에게 ${damageToWild} 데미지!${typeMsg}`;
-                } else if (action === 'SKILL') {
-                    if (user.partner.pp <= 0) {
-                        ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 스킬 PP가 다 소진되었습니다! 센터에서 회복하세요.' }));
-                        return;
-                    }
-                    user.partner.pp -= 1;
-                    const affinityBonus = 1.0 + (user.partner.affinity / 200.0);
-                    const playerSpAtk = user.partner.stats.spAtk * affinityBonus;
-                    const wildSpDef = user.activeWild.stats.spDef;
-                    damageToWild = Math.max(10, Math.floor(((playerSpAtk * 2.2) - (wildSpDef * 0.3)) * typeMult));
-                    user.activeWild.hp -= damageToWild;
-                    actionMsg = `⚡ [스킬: ${user.partner.skillName}] ${damageToWild} 데미지!${typeMsg}`;
-                } else if (action === 'DEFEND') {
-                    isDefending = true;
-                    actionMsg = `🛡️ [방어 태세] 피해 감소!`;
-                }
-
-                if (user.activeWild && user.activeWild.hp <= 0) {
-                    user.activeWild.hp = 0;
-                    const isBoss = user.activeWild.isBoss;
-                    const currentZoneObj = ZONES[user.currentZone];
-
-                    const rewardGold = user.activeWild.level * (isBoss ? 1500 : 350);
-                    const rewardExp = user.activeWild.level * (isBoss ? 100 : 25);
-                    user.gold += rewardGold;
-                    user.partner.exp += rewardExp;
-                    user.partner.affinity = Math.min(100.0, user.partner.affinity + 0.5);
-
-                    let unlockMsg = '';
-                    if (isBoss && currentZoneObj.nextZoneId) {
-                        if (!user.unlockedZones.includes(currentZoneObj.nextZoneId)) {
-                            user.unlockedZones.push(currentZoneObj.nextZoneId);
-                            unlockMsg = `\n🎊 다음 지역 [${ZONES[currentZoneObj.nextZoneId].name}] 해금!`;
-                        }
-                    }
-
-                    let levelUpMsg = '';
-                    if (user.partner.exp >= user.partner.maxExp) {
-                        user.partner.level += 1;
-                        user.partner.exp -= user.partner.maxExp;
-                        user.partner.maxExp = Math.floor(user.partner.maxExp * 1.25);
-                        user.partner.stats = calculateStats(user.partner.id, user.partner.level);
-                        user.partner.hp = user.partner.stats.maxHp;
-                        levelUpMsg = `\n🎉 레벨 업! (Lv.${user.partner.level})`;
-                    }
-
-                    const wildName = user.activeWild.name;
-                    user.activeWild = null;
-                    user.location = '마을';
-
-                    ws.send(JSON.stringify({
-                        type: 'BATTLE_END',
-                        user: user,
-                        msg: `${actionMsg}\n💥 ${wildName} 처치 성공! (+${rewardGold}G, +${rewardExp}EXP)${unlockMsg}${levelUpMsg}`
-                    }));
-                    broadcastUserList();
-                    return;
-                }
-
-                // 상대 공격 상성 계산
-                const enemyTypeMult = getTypeEffectiveness(enemyType, playerType);
-                let wildAtk = user.activeWild.stats.atk;
-                let playerDef = user.partner.stats.def;
-                let damageToPlayer = Math.max(3, Math.floor(((wildAtk * 1.2) - (playerDef * 0.5)) * enemyTypeMult));
-
-                if (isDefending) {
-                    damageToPlayer = Math.floor(damageToPlayer * 0.4);
-                }
-
-                user.partner.hp -= damageToPlayer;
-
-                if (user.partner.hp <= 0) {
-                    user.partner.hp = 0;
-                    user.location = '마을';
-                    user.activeWild = null;
-
-                    ws.send(JSON.stringify({
-                        type: 'BATTLE_END',
-                        user: user,
-                        msg: `${actionMsg}\n💀 ${user.partner.name}이(가) 쓰러졌습니다! 센터에서 치료해주세요.`
-                    }));
-                    broadcastUserList();
-                    return;
-                }
-
-                ws.send(JSON.stringify({
-                    type: 'WILD_HP_UPDATE',
-                    wildHp: user.activeWild.hp,
-                    wildMaxHp: user.activeWild.maxHp,
-                    partnerHp: user.partner.hp,
-                    partnerMaxHp: user.partner.stats.maxHp,
-                    attacker: action === 'DEFEND' || action === 'RUN' ? 'enemy' : 'partner',
-                    msg: `${actionMsg}\n💥 상대 반격: ${damageToPlayer} 데미지`
-                }));
-            }
-
-            if (data.type === 'CATCH_ATTEMPT') {
-                if (!user.activeWild) return;
-                if (user.activeWild.isBoss) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 보스 포켓몬은 포획할 수 없습니다!' }));
-                    return;
-                }
-
-                const ballType = data.ballType || 'poke';
-                if ((user.balls[ballType] || 0) <= 0) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '선택한 몬스터볼이 부족합니다!' }));
-                    return;
-                }
-
-                user.balls[ballType] -= 1;
-                const ballBonus = { poke: 1.0, super: 1.5, hyper: 2.0 }[ballType] || 1.0;
-                const hpRatio = user.activeWild.hp / user.activeWild.maxHp;
-                const catchChance = Math.min(95, Math.max(10, (1.0 - hpRatio * 0.5) * 40 * ballBonus));
-
-                if ((Math.random() * 100) < catchChance) {
-                    const caught = user.activeWild;
-                    user.caughtList.push({
-                        id: caught.id,
-                        name: caught.name,
-                        level: caught.level,
-                        isShiny: caught.isShiny
-                    });
-
-                    user.activeWild = null;
-                    user.location = '마을';
-
-                    ws.send(JSON.stringify({
-                        type: 'CATCH_SUCCESS',
-                        user: user,
-                        msg: `🎉 ${caught.isShiny ? '✨이로치 ' : ''}${caught.name} 포획 성공! 수집함에 보관되었습니다.`
-                    }));
-                } else {
-                    ws.send(JSON.stringify({
-                        type: 'CATCH_FAIL',
-                        user: user,
-                        msg: `아깝다! ${user.activeWild.name}이(가) 볼을 튕겨냈습니다.`
-                    }));
-                }
-            }
-
-            if (data.type === 'TRAIN') {
-                if (user.activeWild) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '⚠️ 전투 중에는 훈련소를 이용할 수 없습니다!' }));
-                    return;
-                }
-                if (checkNeedsHeal(user)) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없습니다! 센터에서 치료받으세요.' }));
-                    return;
-                }
-
-                const cost = Math.floor(1000 * Math.pow(user.partner.level, 1.2));
-                if (user.gold >= cost) {
-                    user.gold -= cost;
-                    user.partner.exp += 30;
-                    user.partner.affinity = Math.min(100.0, user.partner.affinity + 1.5);
-
-                    let msg = `🏋️ 훈련 완료! (+30 EXP, 친밀도 +1.5%, -${cost.toLocaleString()}G)`;
-
-                    if (user.partner.exp >= user.partner.maxExp) {
-                        user.partner.level += 1;
-                        user.partner.exp -= user.partner.maxExp;
-                        user.partner.maxExp = Math.floor(user.partner.maxExp * 1.25);
-                        user.partner.stats = calculateStats(user.partner.id, user.partner.level);
-                        user.partner.hp = user.partner.stats.maxHp;
-                        msg += ` 🎉 레벨 업! (Lv.${user.partner.level})`;
-                    }
-                    ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: msg }));
-                } else {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: `골드가 부족합니다!` }));
-                }
-            }
-
-            if (data.type === 'HEAL') {
-                if (user.activeWild) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '⚠️ 전투 중에는 포켓몬 센터를 이용할 수 없습니다!' }));
-                    return;
-                }
-                const healCost = (user.partner.stats.maxHp - user.partner.hp) * 10 + (user.partner.maxPp - user.partner.pp) * 20;
-                if (user.gold >= healCost) {
-                    user.gold -= healCost;
-                    user.partner.hp = user.partner.stats.maxHp;
-                    user.partner.pp = user.partner.maxPp;
-                    user.partner.affinity = Math.min(100.0, user.partner.affinity + 2.0);
-                    ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: `🏥 파트너 포켓몬이 완치되고 스킬 PP가 회복되었습니다!` }));
-                } else {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '치료 골드가 부족합니다.' }));
-                }
-            }
-
-            if (data.type === 'EVOLVE') {
-                if (user.activeWild) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '⚠️ 전투 중에는 진화를 시도할 수 없습니다!' }));
-                    return;
-                }
-
-                const pInfo = POKEMON_DB[user.partner.id];
-                if (!pInfo || !pInfo.nextEvo) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 이미 최종 진화 상태이거나 진화가 불가능한 포켓몬입니다.' }));
-                    return;
-                }
-
-                // 레벨 조건 검증
-                if (user.partner.level < pInfo.reqLevel) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 레벨이 부족합니다! (필요 레벨: Lv.${pInfo.reqLevel}, 현재: Lv.${user.partner.level})` }));
-                    return;
-                }
-
-                // 친밀도 조건 검증 (기본값 안전장치 추가)
-                const currentAffinity = user.partner.affinity || 0;
-                const reqAff = pInfo.reqAffinity || 0;
-                if (reqAff > 0 && currentAffinity < reqAff) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 친밀도가 부족합니다! (필요 친밀도: ${reqAff}%, 현재: ${Math.floor(currentAffinity)}%)` }));
-                    return;
-                }
-
-                // 진화의 돌 아이템 조건 검증
-                if (pInfo.reqStone && (user.inventory[pInfo.reqStone] || 0) <= 0) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 진화에 [${pInfo.reqStone}] 아이템이 필요합니다.` }));
-                    return;
-                }
-
-                // 진화의 돌 차감
-                if (pInfo.reqStone) {
-                    user.inventory[pInfo.reqStone] -= 1;
-                }
-
-                // 진화 실행
-                const nextInfo = POKEMON_DB[pInfo.nextEvo];
-                user.partner.id = pInfo.nextEvo;
-                user.partner.name = nextInfo.name;
-                user.partner.type = nextInfo.type;
-                user.partner.skillName = nextInfo.skillName;
-                user.partner.maxPp = nextInfo.maxPp;
-                user.partner.pp = nextInfo.maxPp;
-                
-                // 스탯 재계산
-                user.partner.stats = calculateStats(user.partner.id, user.partner.level);
-                user.partner.hp = user.partner.stats.maxHp;
-
-                ws.send(JSON.stringify({ 
-                    type: 'STATE_UPDATE', 
-                    user: user, 
-                    msg: `✨ 축하합니다! 파트너 포켓몬이 [${user.partner.name}](으)로 진화했습니다!` 
-                }));
-                broadcastUserList();
-            }
-        });
-
-    function broadcastUserList() {
-        const list = Object.values(USERS).map(u => {
-            const p = u.partner;
-            const cp = p.stats.atk + p.stats.def + p.stats.spAtk + p.stats.spDef + p.stats.spd + (p.level * 10);
-            return {
-                nickname: u.nickname,
-                zoneName: u.currentZoneName || '연두마을',
-                cp: cp,
-                partnerName: p.name,
-                partnerLevel: p.level
+            users[userId] = {
+                id: userId,
+                nickname: data.nickname || '트레이너',
+                gold: 5000,
+                balls: { poke: 10, super: 3, hyper: 1 },
+                inventory: { '리프의 돌': 1, '불꽃의 돌': 1, '물의 돌': 1, '천둥의 돌': 1, '달의 돌': 1 },
+                currentZone: 1,
+                currentZoneName: ZONES[1].name,
+                unlockedZones: [1],
+                location: '마을',
+                partner: {
+                    id: starterId,
+                    name: starterInfo.name,
+                    type: starterInfo.type,
+                    level: 5,
+                    exp: 0,
+                    maxExp: 100,
+                    hp: initialStats.maxHp,
+                    stats: initialStats,
+                    skillName: starterInfo.skillName,
+                    pp: starterInfo.maxPp,
+                    maxPp: starterInfo.maxPp,
+                    affinity: 10.0
+                },
+                caughtList: [],
+                activeWild: null
             };
-        });
 
-        wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({ type: 'SIDEBAR_LIST', users: list }));
+            ws.send(JSON.stringify({
+                type: 'STATE_UPDATE',
+                user: users[userId],
+                msg: `🎮 환영합니다, ${users[userId].nickname}님! 파트너 [${starterInfo.name}]와 함께 모험을 시작합니다.`
+            }));
+            broadcastUserList();
+            return;
+        }
+
+        const user = users[userId];
+        if (!user) return;
+
+        if (data.type === 'EXPLORE_FIELD') {
+            if (checkNeedsHeal(user)) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없습니다! 센터에서 치료하세요.' }));
+                return;
             }
-        });
-    }
+
+            user.location = '필드';
+            const zone = ZONES[user.currentZone];
+            const wildId = zone.pool[Math.floor(Math.random() * zone.pool.length)];
+            
+            // ✨ 이로치 확률 1% (0.01) 적용
+            const isShiny = Math.random() < 0.01; 
+            
+            const wildLevel = Math.floor(Math.random() * (zone.maxLevel - zone.minLevel + 1)) + zone.minLevel;
+            const wildStats = calculateStats(wildId, wildLevel);
+
+            user.activeWild = {
+                id: wildId,
+                name: POKEMON_DB[wildId].name,
+                type: POKEMON_DB[wildId].type,
+                level: wildLevel,
+                hp: wildStats.maxHp,
+                maxHp: wildStats.maxHp,
+                stats: wildStats,
+                isShiny: isShiny,
+                isBoss: false
+            };
+
+            ws.send(JSON.stringify({
+                type: 'WILD_SPAWN',
+                user: user,
+                wild: user.activeWild,
+                msg: `🌿 야생의 ${isShiny ? '✨이로치 ' : ''}[${user.activeWild.name}] (Lv.${wildLevel})이(가) 나타났다!`
+            }));
+        }
+
+        if (data.type === 'BATTLE_ACTION') {
+            if (!user.activeWild) return;
+
+            const partner = user.partner;
+            const wild = user.activeWild;
+            const action = data.action;
+
+            if (action === 'RUN') {
+                user.activeWild = null;
+                user.location = '마을';
+                ws.send(JSON.stringify({
+                    type: 'BATTLE_END',
+                    user: user,
+                    msg: '🏃 성공적으로 도망쳤습니다.'
+                }));
+                return;
+            }
+
+            let partnerDmg = 0;
+            let logMsg = '';
+
+            if (action === 'ATTACK') {
+                const eff = getTypeEffectiveness(partner.type, wild.type);
+                partnerDmg = Math.max(1, Math.floor((partner.stats.atk - wild.stats.def * 0.5) * eff));
+                logMsg = `⚔️ [${partner.name}]의 기본 공격! (${partnerDmg} 데미지)`;
+                if (eff > 1.0) logMsg += ' (효과가 뛰어났다!)';
+                else if (eff < 1.0) logMsg += ' (효과가 별로인 듯하다...)';
+            } else if (action === 'SKILL') {
+                if (partner.pp <= 0) {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 스킬 PP가 부족합니다!' }));
+                    return;
+                }
+                partner.pp -= 1;
+                const eff = getTypeEffectiveness(partner.type, wild.type);
+                partnerDmg = Math.max(1, Math.floor((partner.stats.spAtk * 1.3 - wild.stats.spDef * 0.4) * eff));
+                logMsg = `✨ [${partner.name}]의 [${partner.skillName}]! (${partnerDmg} 데미지)`;
+            } else if (action === 'DEFEND') {
+                logMsg = `🛡️ [${partner.name}]이(가) 방어 자세를 취했습니다.`;
+            }
+
+            wild.hp = Math.max(0, wild.hp - partnerDmg);
+
+            // 상대 포켓몬 쓰러짐 처리
+            if (wild.hp <= 0) {
+                const expGained = wild.level * 15;
+                const goldGained = wild.level * 80 + (wild.isBoss ? 2000 : 0);
+
+                partner.exp += expGained;
+                user.gold += goldGained;
+                partner.affinity = Math.min(100.0, partner.affinity + 0.5);
+
+                logMsg += `\n🎉 야생 포켓몬을 쓰러뜨렸습니다! (+${expGained} EXP, +${goldGained}G, 친밀도 +0.5%)`;
+
+                // 레벨업 처리
+                if (partner.exp >= partner.maxExp) {
+                    partner.level += 1;
+                    partner.exp -= partner.maxExp;
+                    partner.maxExp = Math.floor(partner.maxExp * 1.25);
+                    partner.stats = calculateStats(partner.id, partner.level);
+                    partner.hp = partner.stats.maxHp;
+                    logMsg += ` 🌟 레벨 업! (Lv.${partner.level})`;
+                }
+
+                // 보스 처치 시 다음 지역 해금
+                if (wild.isBoss) {
+                    const currentZoneObj = ZONES[user.currentZone];
+                    if (currentZoneObj.nextZoneId && !user.unlockedZones.includes(currentZoneObj.nextZoneId)) {
+                        user.unlockedZones.push(currentZoneObj.nextZoneId);
+                        logMsg += `\n🏆 보스를 격파하여 다음 지역이 해금되었습니다!`;
+                    }
+                }
+
+                user.activeWild = null;
+                user.location = '마을';
+
+                ws.send(JSON.stringify({
+                    type: 'BATTLE_END',
+                    user: user,
+                    msg: logMsg
+                }));
+                broadcastUserList();
+                return;
+            }
+
+            // 야생 포켓몬 반격
+            let wildDmg = Math.max(1, Math.floor(wild.stats.atk - partner.stats.def * 0.5));
+            if (action === 'DEFEND') wildDmg = Math.floor(wildDmg * 0.4);
+
+            partner.hp = Math.max(0, partner.hp - wildDmg);
+            logMsg += `\n💥 야생 [${wild.name}]의 반격! (${wildDmg} 데미지 받음)`;
+
+            if (partner.hp <= 0) {
+                user.activeWild = null;
+                user.location = '마을';
+                logMsg += `\n💀 파트너 포켓몬이 쓰러졌습니다! 센터에서 치료받으세요.`;
+                ws.send(JSON.stringify({
+                    type: 'BATTLE_END',
+                    user: user,
+                    msg: logMsg
+                }));
+                broadcastUserList();
+                return;
+            }
+
+            ws.send(JSON.stringify({
+                type: 'WILD_HP_UPDATE',
+                wildHp: wild.hp,
+                wildMaxHp: wild.maxHp,
+                partnerHp: partner.hp,
+                partnerMaxHp: partner.stats.maxHp,
+                attacker: 'partner',
+                msg: logMsg
+            }));
+        }
+
+        if (data.type === 'CATCH_ATTEMPT') {
+            if (!user.activeWild) return;
+
+            const ballType = data.ballType || 'poke';
+            if ((user.balls[ballType] || 0) <= 0) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 해당 몬스터볼이 부족합니다!' }));
+                return;
+            }
+
+            user.balls[ballType] -= 1;
+
+            const wild = user.activeWild;
+            const ballBonus = { poke: 1.0, super: 1.5, hyper: 2.0 }[ballType] || 1.0;
+            const hpRatio = wild.hp / wild.maxHp;
+            const catchRate = Math.min(0.95, (1.0 - hpRatio * 0.7) * ballBonus);
+
+            if (Math.random() < catchRate) {
+                user.caughtList.push({
+                    id: wild.id,
+                    name: wild.name,
+                    level: wild.level,
+                    isShiny: wild.isShiny
+                });
+
+                user.gold += wild.level * 100;
+                user.partner.affinity = Math.min(100.0, user.partner.affinity + 1.0);
+
+                const catchMsg = `🎯 축하합니다! ${wild.isShiny ? '✨이로치 ' : ''}[${wild.name}] 포획에 성공했습니다! (+${wild.level * 100}G, 친밀도 +1%)`;
+                user.activeWild = null;
+                user.location = '마을';
+
+                ws.send(JSON.stringify({
+                    type: 'CATCH_SUCCESS',
+                    user: user,
+                    msg: catchMsg
+                }));
+                broadcastUserList();
+            } else {
+                ws.send(JSON.stringify({
+                    type: 'CATCH_FAIL',
+                    msg: `💨 [${wild.name}]이(가) 몬스터볼을 튀겨냈습니다!`
+                }));
+            }
+        }
+
+        if (data.type === 'CHALLENGE_BOSS') {
+            if (user.activeWild) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: '⚠️ 이미 전투 진행 중입니다!' }));
+                return;
+            }
+            if (checkNeedsHeal(user)) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없습니다! 센터에서 치료하세요.' }));
+                return;
+            }
+
+            const zone = ZONES[user.currentZone];
+            const bossStats = calculateStats(zone.bossId, zone.bossLevel);
+
+            user.location = '보스전';
+            user.activeWild = {
+                id: zone.bossId,
+                name: zone.bossName,
+                type: POKEMON_DB[zone.bossId].type,
+                level: zone.bossLevel,
+                hp: bossStats.maxHp,
+                maxHp: bossStats.maxHp,
+                stats: bossStats,
+                isShiny: false,
+                isBoss: true
+            };
+
+            ws.send(JSON.stringify({
+                type: 'WILD_SPAWN',
+                user: user,
+                wild: user.activeWild,
+                msg: `👑 [${zone.name}] 보스전에 도전합니다! 보스: [${zone.bossName}]`
+            }));
+        }
+
+        if (data.type === 'REQ_ZONE_INFO') {
+            ws.send(JSON.stringify({
+                type: 'ZONE_INFO',
+                zones: Object.values(ZONES).map(z => ({
+                    id: z.id,
+                    name: z.name,
+                    minLevel: z.minLevel,
+                    maxLevel: z.maxLevel,
+                    bossName: z.bossName
+                })),
+                unlockedZones: user.unlockedZones,
+                currentZone: user.currentZone
+            }));
+        }
+
+        if (data.type === 'CHANGE_ZONE') {
+            const targetZoneId = parseInt(data.zoneId, 10);
+
+            if (user.activeWild) {
+                ws.send(JSON.stringify({
+                    type: 'LOG',
+                    msg: '⚠️ 야생 포켓몬과 전투 중에는 지역을 이동할 수 없습니다!'
+                }));
+                return;
+            }
+
+            const unlocked = user.unlockedZones.map(id => parseInt(id, 10));
+            if (unlocked.includes(targetZoneId) && ZONES[targetZoneId]) {
+                user.currentZone = targetZoneId;
+                user.currentZoneName = ZONES[targetZoneId].name;
+                user.location = '마을';
+                user.activeWild = null;
+
+                ws.send(JSON.stringify({
+                    type: 'STATE_UPDATE',
+                    user: user,
+                    msg: `🗺️ [${user.currentZoneName}](으)로 이동했습니다.`
+                }));
+                broadcastUserList();
+            } else {
+                ws.send(JSON.stringify({
+                    type: 'LOG',
+                    msg: '❌ 아직 해금되지 않은 지역입니다. 이전 지역 보스를 먼저 처치하세요!'
+                }));
+            }
+        }
+
+        if (data.type === 'TRAIN') {
+            if (user.activeWild) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: '⚠️ 전투 중에는 훈련소를 이용할 수 없습니다!' }));
+                return;
+            }
+            if (checkNeedsHeal(user)) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없습니다! 센터에서 치료받으세요.' }));
+                return;
+            }
+
+            const cost = Math.floor(1000 * Math.pow(user.partner.level, 1.2));
+            if (user.gold >= cost) {
+                user.gold -= cost;
+                user.partner.exp += 30;
+                user.partner.affinity = Math.min(100.0, user.partner.affinity + 1.5);
+
+                let msg = `🏋️ 훈련 완료! (+30 EXP, 친밀도 +1.5%, -${cost.toLocaleString()}G)`;
+
+                if (user.partner.exp >= user.partner.maxExp) {
+                    user.partner.level += 1;
+                    user.partner.exp -= user.partner.maxExp;
+                    user.partner.maxExp = Math.floor(user.partner.maxExp * 1.25);
+                    user.partner.stats = calculateStats(user.partner.id, user.partner.level);
+                    user.partner.hp = user.partner.stats.maxHp;
+                    msg += ` 🎉 레벨 업! (Lv.${user.partner.level})`;
+                }
+                ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: msg }));
+                broadcastUserList();
+            } else {
+                ws.send(JSON.stringify({ type: 'LOG', msg: `골드가 부족합니다!` }));
+            }
+        }
+
+        if (data.type === 'HEAL') {
+            if (user.activeWild) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: '⚠️ 전투 중에는 포켓몬 센터를 이용할 수 없습니다!' }));
+                return;
+            }
+            const healCost = (user.partner.stats.maxHp - user.partner.hp) * 10 + (user.partner.maxPp - user.partner.pp) * 20;
+            if (user.gold >= healCost) {
+                user.gold -= healCost;
+                user.partner.hp = user.partner.stats.maxHp;
+                user.partner.pp = user.partner.maxPp;
+                user.partner.affinity = Math.min(100.0, user.partner.affinity + 2.0);
+                ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: `🏥 파트너 포켓몬이 완치되고 스킬 PP가 회복되었습니다!` }));
+            } else {
+                ws.send(JSON.stringify({ type: 'LOG', msg: '치료 골드가 부족합니다.' }));
+            }
+        }
+
+        if (data.type === 'EVOLVE') {
+            if (user.activeWild) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: '⚠️ 전투 중에는 진화를 시도할 수 없습니다!' }));
+                return;
+            }
+
+            const pInfo = POKEMON_DB[user.partner.id];
+            if (!pInfo || !pInfo.nextEvo) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 이미 최종 진화 상태이거나 진화가 불가능한 포켓몬입니다.' }));
+                return;
+            }
+
+            // 레벨 조건 검증
+            if (user.partner.level < pInfo.reqLevel) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 레벨이 부족합니다! (필요 레벨: Lv.${pInfo.reqLevel}, 현재: Lv.${user.partner.level})` }));
+                return;
+            }
+
+            // 친밀도 조건 검증
+            const currentAffinity = user.partner.affinity || 0;
+            const reqAff = pInfo.reqAffinity || 0;
+            if (reqAff > 0 && currentAffinity < reqAff) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 친밀도가 부족합니다! (필요 친밀도: ${reqAff}%, 현재: ${Math.floor(currentAffinity)}%)` }));
+                return;
+            }
+
+            // 진화의 돌 조건 검증
+            if (pInfo.reqStone && (user.inventory[pInfo.reqStone] || 0) <= 0) {
+                ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 진화에 [${pInfo.reqStone}] 아이템이 필요합니다.` }));
+                return;
+            }
+
+            // 진화의 돌 차감
+            if (pInfo.reqStone) {
+                user.inventory[pInfo.reqStone] -= 1;
+            }
+
+            // 진화 실행
+            const nextInfo = POKEMON_DB[pInfo.nextEvo];
+            user.partner.id = pInfo.nextEvo;
+            user.partner.name = nextInfo.name;
+            user.partner.type = nextInfo.type;
+            user.partner.skillName = nextInfo.skillName;
+            user.partner.maxPp = nextInfo.maxPp;
+            user.partner.pp = nextInfo.maxPp;
+            user.partner.stats = calculateStats(user.partner.id, user.partner.level);
+            user.partner.hp = user.partner.stats.maxHp;
+
+            ws.send(JSON.stringify({ 
+                type: 'STATE_UPDATE', 
+                user: user, 
+                msg: `✨ 축하합니다! 파트너 포켓몬이 [${user.partner.name}](으)로 진화했습니다!` 
+            }));
+            broadcastUserList();
+        }
+
+        if (data.type === 'REQ_POKEDEX_INFO') {
+            ws.send(JSON.stringify({
+                type: 'POKEDEX_INFO',
+                caughtList: user.caughtList
+            }));
+        }
+    });
+
+    ws.on('close', () => {
+        if (userId && users[userId]) {
+            delete users[userId];
+            broadcastUserList();
+        }
+    });
 });
 
 server.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
+    console.log(`🚀 포켓몬 멀티플레이어 서버가 ${PORT} 포트에서 실행 중입니다.`);
 });
