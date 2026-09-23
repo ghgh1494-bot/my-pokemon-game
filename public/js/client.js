@@ -13,14 +13,21 @@ const ballImages = {
     hyper: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png'
 };
 
-// 💡 1. 페이지 로드 시 기존 저장된 계정 ID가 있으면 자동 로그인 시도
 window.addEventListener('DOMContentLoaded', () => {
     const savedUserId = localStorage.getItem('pokemon_user_id');
     const savedNickname = localStorage.getItem('pokemon_nickname');
 
     if (savedUserId && savedNickname) {
         currentNickname = savedNickname;
-        initWebSocket(1, savedUserId); // 기존 저장된 ID로 접속 요청
+        
+        // 💡 핵심: 저장된 세션이 있으면 즉시 로그인 모달을 숨깁니다!
+        const loginModal = document.getElementById('login-modal');
+        if (loginModal) {
+            loginModal.classList.add('hidden');
+        }
+
+        console.log('🔄 [자동 재접속 시도] 저장된 ID:', savedUserId);
+        initWebSocket(1, savedUserId); 
     }
 });
 
