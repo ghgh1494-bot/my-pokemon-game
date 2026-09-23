@@ -486,17 +486,19 @@ document.getElementById('btn-open-evolve').addEventListener('click', () => {
     }
     if (!currentUserData) return;
     const p = currentUserData.partner;
+    
     const evoInfo = {
-        1: { reqLv: 16, stone: '없음 (레벨 달성 시)' },
-        2: { reqLv: 32, stone: '리프의 돌' },
-        4: { reqLv: 16, stone: '없음 (레벨 달성 시)' },
-        5: { reqLv: 36, stone: '불꽃의 돌' },
-        7: { reqLv: 16, stone: '없음 (레벨 달성 시)' },
-        8: { reqLv: 36, stone: '물의 돌' },
-        25: { reqLv: 20, stone: '천둥의 돌' }
-    }[p.id] || { reqLv: 99, stone: '최종 진화 완료' };
+        1:  { reqLv: 16, reqAff: '없음', stone: '없음' },
+        2:  { reqLv: 32, reqAff: '100%', stone: '리프의 돌' },
+        4:  { reqLv: 16, reqAff: '없음', stone: '없음' },
+        5:  { reqLv: 36, reqAff: '100%', stone: '불꽃의 돌' },
+        7:  { reqLv: 16, reqAff: '없음', stone: '없음' },
+        8:  { reqLv: 36, reqAff: '100%', stone: '물의 돌' },
+        25: { reqLv: 1,  reqAff: '100%', stone: '천둥의 돌' }
+    }[p.id] || { reqLv: 99, reqAff: '최대', stone: '최종 진화 완료' };
 
-    document.getElementById('evolve-req-level').innerText = `Lv.${evoInfo.reqLv}`;
+    document.getElementById('evolve-req-level').innerText = evoInfo.reqLv === 99 ? '최종 진화' : `Lv.${evoInfo.reqLv}`;
+    document.getElementById('evolve-req-affinity').innerText = evoInfo.reqAff;
     document.getElementById('evolve-stone-name').innerText = evoInfo.stone;
     document.getElementById('evolve-modal').classList.remove('hidden');
 });
