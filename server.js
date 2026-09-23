@@ -53,11 +53,24 @@ app.post('/api/admin/reset', (req, res) => {
 });
 
 // ==========================================
-// 🛠️ 관리자 웹페이지 대시보드 라우터
+// 🛠️ 관리자 웹페이지 대시보드 라우터 (수정본)
 // ==========================================
 app.get('/admin', (req, res) => {
     let userRows = '';
-    const allUsers = Object.values(users);
+    
+    // 💡 메모리에 없더라도 저장된 파일(save_data.json)을 직접 읽어서 확실하게 가져옴
+    let displayUsers = { ...users };
+    if (fs.existsSync(SAVE_FILE_PATH)) {
+        try {
+            const fileData = fs.readFileSync(SAVE_FILE_PATH, 'utf-8');
+            const parsedData = JSON.parse(fileData);
+            displayUsers = { ...parsedData, ...users }; // 파일 데이터와 메모리 데이터 병합
+        } catch (e) {
+            console.error('어드민 파일 로드 중 오류:', e);
+        }
+    }
+
+    const allUsers = Object.values(displayUsers);
 
     if (allUsers.length === 0) {
         userRows = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #888;">현재 접속 중이거나 저장된 유저가 없습니다.</td></tr>`;
