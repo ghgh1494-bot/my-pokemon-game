@@ -202,25 +202,34 @@ wss.on('connection', (ws) => {
             }
 
             if (data.type === 'CHANGE_ZONE') {
-                const targetZoneId = parseInt(data.zoneId);
-                // 전투 중에는 도망치거나 전투 종료 후 이동 가능
+                const targetZoneId = parseInt(data.zoneId, 10);
+
                 if (user.activeWild) {
                     ws.send(JSON.stringify({
                         type: 'LOG',
-                        msg: '⚠️ 야생 포켓몬과 전투 중에는 지역을 이동할 수 없습니다! (도망치기를 먼저 사용하세요)'
+                        msg: '⚠️ 야생 포켓몬과 전투 중에는 지역을 이동할 수 없습니다!'
                     }));
                     return;
                 }
 
-                if (user.unlockedZones.includes(targetZoneId)) {
+                // 해금된 지역 목록 비교
+                const unlocked = user.unlockedZones.map(id => parseInt(id, 10));
+                if (unlocked.includes(targetZoneId) && ZONES[targetZoneId]) {
                     user.currentZone = targetZoneId;
                     user.currentZoneName = ZONES[targetZoneId].name;
                     user.location = '마을';
                     user.activeWild = null;
+
                     ws.send(JSON.stringify({
                         type: 'STATE_UPDATE',
                         user: user,
                         msg: `🗺️ [${user.currentZoneName}](으)로 이동했습니다.`
+                    }));
+                    broadcastUserList();
+                } else {
+                    ws.send(JSON.stringify({
+                        type: 'LOG',
+                        msg: '❌ 아직 해금되지 않은 지역입니다. 보스를 먼저 처치하세요!'
                     }));
                 }
             }
