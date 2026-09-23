@@ -715,35 +715,39 @@ wss.on('connection', (ws) => {
                     ws.send(JSON.stringify({ type: 'LOG', msg: '⚠️ 전투 중에는 진화를 시도할 수 없습니다!' }));
                     return;
                 }
+
                 const pInfo = POKEMON_DB[user.partner.id];
                 if (!pInfo || !pInfo.nextEvo) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: '이미 최종 진화 상태입니다.' }));
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 이미 최종 진화 상태이거나 진화가 불가능한 포켓몬입니다.' }));
                     return;
                 }
 
+                // 레벨 조건 검증
                 if (user.partner.level < pInfo.reqLevel) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 진화 레벨이 부족합니다! (필요 레벨: Lv.${pInfo.reqLevel})` }));
+                    ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 레벨이 부족합니다! (필요 레벨: Lv.${pInfo.reqLevel}, 현재: Lv.${user.partner.level})` }));
                     return;
                 }
 
+                // 친밀도 조건 검증 (기본값 안전장치 추가)
+                const currentAffinity = user.partner.affinity || 0;
+                const reqAff = pInfo.reqAffinity || 0;
+                if (reqAff > 0 && currentAffinity < reqAff) {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 친밀도가 부족합니다! (필요 친밀도: ${reqAff}%, 현재: ${Math.floor(currentAffinity)}%)` }));
+                    return;
+                }
+
+                // 진화의 돌 아이템 조건 검증
                 if (pInfo.reqStone && (user.inventory[pInfo.reqStone] || 0) <= 0) {
-                    ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 진화에 [${pInfo.reqStone}]이 필요합니다.` }));
+                    ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 진화에 [${pInfo.reqStone}] 아이템이 필요합니다.` }));
                     return;
                 }
 
-                // 친밀도 조건 검증
-if (pInfo.reqAffinity > 0 && user.partner.affinity < pInfo.reqAffinity) {
-    ws.send(JSON.stringify({ 
-        type: 'LOG', 
-        msg: `❌ 친밀도가 부족합니다! (필요 친밀도: ${pInfo.reqAffinity}%, 현재: ${Math.floor(user.partner.affinity)}%)` 
-    }));
-    return;
-}
-                
+                // 진화의 돌 차감
                 if (pInfo.reqStone) {
                     user.inventory[pInfo.reqStone] -= 1;
                 }
 
+                // 진화 실행
                 const nextInfo = POKEMON_DB[pInfo.nextEvo];
                 user.partner.id = pInfo.nextEvo;
                 user.partner.name = nextInfo.name;
@@ -751,15 +755,19 @@ if (pInfo.reqAffinity > 0 && user.partner.affinity < pInfo.reqAffinity) {
                 user.partner.skillName = nextInfo.skillName;
                 user.partner.maxPp = nextInfo.maxPp;
                 user.partner.pp = nextInfo.maxPp;
+                
+                // 스탯 재계산
                 user.partner.stats = calculateStats(user.partner.id, user.partner.level);
                 user.partner.hp = user.partner.stats.maxHp;
 
-                ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: `✨ 축하합니다! [${user.partner.name}](으)로 진화했습니다!` }));
+                ws.send(JSON.stringify({ 
+                    type: 'STATE_UPDATE', 
+                    user: user, 
+                    msg: `✨ 축하합니다! 파트너 포켓몬이 [${user.partner.name}](으)로 진화했습니다!` 
+                }));
+                broadcastUserList();
             }
-        } catch (err) {
-            console.error(err);
-        }
-    });
+        });
 
     function broadcastUserList() {
         const list = Object.values(USERS).map(u => {
