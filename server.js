@@ -478,6 +478,10 @@ wss.on('connection', (ws) => {
             }
 
             if (data.type === 'TRAIN') {
+                if (user.activeWild) {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '⚠️ 전투 중에는 훈련소를 이용할 수 없습니다!' }));
+                    return;
+                }
                 if (checkNeedsHeal(user)) {
                     ws.send(JSON.stringify({ type: 'LOG', msg: '❌ 체력이 없습니다! 센터에서 치료받으세요.' }));
                     return;
@@ -506,6 +510,10 @@ wss.on('connection', (ws) => {
             }
 
             if (data.type === 'HEAL') {
+                if (user.activeWild) {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '⚠️ 전투 중에는 포켓몬 센터를 이용할 수 없습니다!' }));
+                    return;
+                }
                 const healCost = (user.partner.stats.maxHp - user.partner.hp) * 10 + (user.partner.maxPp - user.partner.pp) * 20;
                 if (user.gold >= healCost) {
                     user.gold -= healCost;
@@ -519,6 +527,10 @@ wss.on('connection', (ws) => {
             }
 
             if (data.type === 'EVOLVE') {
+                if (user.activeWild) {
+                    ws.send(JSON.stringify({ type: 'LOG', msg: '⚠️ 전투 중에는 진화를 시도할 수 없습니다!' }));
+                    return;
+                }
                 const pInfo = POKEMON_DB[user.partner.id];
                 if (!pInfo || !pInfo.nextEvo) {
                     ws.send(JSON.stringify({ type: 'LOG', msg: '이미 최종 진화 상태입니다.' }));
