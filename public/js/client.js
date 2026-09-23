@@ -211,6 +211,22 @@ function updateUI(user) {
     document.getElementById('stat-affinity').innerText = `${Math.floor(p.affinity)}%`;
     document.getElementById('stat-pp').innerText = `${p.pp} / ${p.maxPp}`;
 
+    // 🎒 좌측 포켓몬 현황 하단에 보유 아이템 ([아이템이름] x [수량]) 표시
+    const invContainer = document.getElementById('inventory-list');
+    if (invContainer && user.inventory) {
+        const items = Object.entries(user.inventory).filter(([_, count]) => count > 0);
+        if (items.length > 0) {
+            invContainer.innerHTML = items.map(([itemName, count]) => `
+                <div class="flex justify-between items-center bg-slate-800/60 px-2.5 py-1 rounded-md border border-slate-700/50">
+                    <span class="text-amber-300 font-bold">${itemName}</span>
+                    <span class="text-slate-200">x ${count}</span>
+                </div>
+            `).join('');
+        } else {
+            invContainer.innerHTML = `<div class="text-slate-500 text-[11px]">보유한 아이템이 없습니다.</div>`;
+        }
+    }
+
     document.getElementById('partner-pokemon-img').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`;
 
     document.getElementById('count-poke').innerText = user.balls.poke || 0;
