@@ -481,7 +481,7 @@ document.getElementById('btn-open-evolve').addEventListener('click', () => {
     if (!currentUserData) return;
     const p = currentUserData.partner;
     
-    // 🔥 친밀도 및 돌 필요 조건 매핑
+    // 포켓몬 진화 정보 목록
     const evoInfo = {
         1:   { reqLv: 16, reqAff: '없음', stone: '없음' },
         2:   { reqLv: 32, reqAff: '100%', stone: '리프의 돌' },
@@ -489,6 +489,13 @@ document.getElementById('btn-open-evolve').addEventListener('click', () => {
         5:   { reqLv: 36, reqAff: '100%', stone: '불꽃의 돌' },
         7:   { reqLv: 16, reqAff: '없음', stone: '없음' },
         8:   { reqLv: 36, reqAff: '100%', stone: '물의 돌' },
+        10:  { reqLv: 7,  reqAff: '없음', stone: '없음' },
+        11:  { reqLv: 10, reqAff: '없음', stone: '없음' },
+        13:  { reqLv: 7,  reqAff: '없음', stone: '없음' },
+        14:  { reqLv: 10, reqAff: '없음', stone: '없음' },
+        16:  { reqLv: 18, reqAff: '없음', stone: '없음' },
+        17:  { reqLv: 36, reqAff: '없음', stone: '없음' },
+        19:  { reqLv: 20, reqAff: '없음', stone: '없음' },
         25:  { reqLv: 20, reqAff: '100%', stone: '천둥의 돌' },
         30:  { reqLv: 36, reqAff: '100%', stone: '달의 돌' },
         33:  { reqLv: 36, reqAff: '100%', stone: '달의 돌' },
@@ -501,7 +508,10 @@ document.getElementById('btn-open-evolve').addEventListener('click', () => {
         90:  { reqLv: 20, reqAff: '100%', stone: '물의 돌' },
         102: { reqLv: 20, reqAff: '100%', stone: '리프의 돌' },
         120: { reqLv: 20, reqAff: '100%', stone: '물의 돌' },
-        133: { reqLv: 20, reqAff: '100%', stone: '진화의 돌 필요' }
+        129: { reqLv: 20, reqAff: '없음', stone: '없음' },
+        133: { reqLv: 20, reqAff: '100%', stone: '진화의 돌' },
+        147: { reqLv: 30, reqAff: '없음', stone: '없음' },
+        148: { reqLv: 55, reqAff: '없음', stone: '없음' }
     }[p.id] || { reqLv: 99, reqAff: '최대', stone: '최종 진화 완료' };
 
     document.getElementById('evolve-req-level').innerText = evoInfo.reqLv === 99 ? '최종 진화' : `Lv.${evoInfo.reqLv}`;
@@ -509,7 +519,6 @@ document.getElementById('btn-open-evolve').addEventListener('click', () => {
     document.getElementById('evolve-stone-name').innerText = evoInfo.stone;
     document.getElementById('evolve-modal').classList.remove('hidden');
 });
-
 document.getElementById('btn-confirm-train').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'TRAIN' })); closeModal('train-modal'); });
 document.getElementById('btn-confirm-heal').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'HEAL' })); closeModal('heal-modal'); });
 document.getElementById('btn-confirm-evolve').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'EVOLVE' })); closeModal('evolve-modal'); });
