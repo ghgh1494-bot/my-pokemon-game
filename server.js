@@ -732,6 +732,15 @@ wss.on('connection', (ws) => {
                     return;
                 }
 
+                // 친밀도 조건 검증
+if (pInfo.reqAffinity > 0 && user.partner.affinity < pInfo.reqAffinity) {
+    ws.send(JSON.stringify({ 
+        type: 'LOG', 
+        msg: `❌ 친밀도가 부족합니다! (필요 친밀도: ${pInfo.reqAffinity}%, 현재: ${Math.floor(user.partner.affinity)}%)` 
+    }));
+    return;
+}
+                
                 if (pInfo.reqStone) {
                     user.inventory[pInfo.reqStone] -= 1;
                 }
