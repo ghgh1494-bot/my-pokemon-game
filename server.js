@@ -752,8 +752,11 @@ wss.on('connection', (ws) => {
             }
 
             // 진화의 돌 차감
-            if (pInfo.reqStone) {
-                user.inventory[pInfo.reqStone] -= 1;
+           if (pInfo.reqStone) {
+                user.inventory[pInfo.reqStone] = (user.inventory[pInfo.reqStone] || 1) - 1;
+                if (user.inventory[pInfo.reqStone] <= 0) {
+                    delete user.inventory[pInfo.reqStone];
+                }
             }
 
             // 진화 실행
