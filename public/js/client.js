@@ -386,19 +386,31 @@ document.getElementById('btn-catch').addEventListener('click', () => ws.send(JSO
 document.getElementById('btn-run').addEventListener('click', () => ws.send(JSON.stringify({ type: 'BATTLE_ACTION', action: 'RUN' })));
 
 // 시설 모달 버튼
-document.getElementById('btn-boss').addEventListener('click', () => ws.send(JSON.stringify({ type: 'CHALLENGE_BOSS' })));
-document.getElementById('btn-open-zone').addEventListener('click', () => {
-    ws.send(JSON.stringify({ type: 'REQ_ZONE_INFO' }));
-    document.getElementById('zone-modal').classList.remove('hidden');
+document.getElementById('btn-boss').addEventListener('click', () => {
+    if (inBattleState) {
+        alert('전투 중에는 보스 도전을 새로 시작할 수 없습니다!');
+        return;
+    }
+    ws.send(JSON.stringify({ type: 'CHALLENGE_BOSS' }));
 });
+
 document.getElementById('btn-open-train').addEventListener('click', () => {
+    if (inBattleState) {
+        alert('전투 중에는 훈련소를 이용할 수 없습니다!');
+        return;
+    }
     if (!currentUserData) return;
     const cost = Math.floor(1000 * Math.pow(currentUserData.partner.level, 1.2));
     document.getElementById('train-cost-val').innerText = cost.toLocaleString();
     document.getElementById('train-user-gold').innerText = currentUserData.gold.toLocaleString();
     document.getElementById('train-modal').classList.remove('hidden');
 });
+
 document.getElementById('btn-open-heal').addEventListener('click', () => {
+    if (inBattleState) {
+        alert('전투 중에는 포켓몬 센터를 이용할 수 없습니다! (도망치거나 전투 종료 후 이용하세요)');
+        return;
+    }
     if (!currentUserData) return;
     const p = currentUserData.partner;
     const healCost = (p.stats.maxHp - p.hp) * 10 + (p.maxPp - p.pp) * 20;
@@ -406,7 +418,12 @@ document.getElementById('btn-open-heal').addEventListener('click', () => {
     document.getElementById('heal-cost-val').innerText = healCost.toLocaleString();
     document.getElementById('heal-modal').classList.remove('hidden');
 });
+
 document.getElementById('btn-open-evolve').addEventListener('click', () => {
+    if (inBattleState) {
+        alert('전투 중에는 진화를 시도할 수 없습니다!');
+        return;
+    }
     if (!currentUserData) return;
     const p = currentUserData.partner;
     const evoInfo = {
@@ -423,7 +440,6 @@ document.getElementById('btn-open-evolve').addEventListener('click', () => {
     document.getElementById('evolve-stone-name').innerText = evoInfo.stone;
     document.getElementById('evolve-modal').classList.remove('hidden');
 });
-
 document.getElementById('btn-confirm-train').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'TRAIN' })); closeModal('train-modal'); });
 document.getElementById('btn-confirm-heal').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'HEAL' })); closeModal('heal-modal'); });
 document.getElementById('btn-confirm-evolve').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'EVOLVE' })); closeModal('evolve-modal'); });
