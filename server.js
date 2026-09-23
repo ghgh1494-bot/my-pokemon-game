@@ -1,7 +1,31 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
+const fs = require('fs');
 const path = require('path');
+
+const SAVE_FILE_PATH = path.join(__dirname, 'save_data.json');
+
+// 서버 시작 시 파일에서 유저 데이터 불러오기
+let users = {};
+if (fs.existsSync(SAVE_FILE_PATH)) {
+    try {
+        const rawData = fs.readFileSync(SAVE_FILE_PATH, 'utf-8');
+        users = JSON.parse(rawData);
+        console.log('💾 [데이터베이스] 저장된 유저 데이터를 성공적으로 로드했습니다.');
+    } catch (e) {
+        console.error('⚠️ 저장된 유저 데이터 로드 실패, 빈 데이터베이스로 시작합니다.', e);
+    }
+}
+
+// 파일에 유저 데이터 영구 저장 함수
+function saveGameData() {
+    try {
+        fs.writeFileSync(SAVE_FILE_PATH, JSON.stringify(users, null, 2), 'utf-8');
+    } catch (e) {
+        console.error('⚠️ 데이터 저장 중 오류 발생:', e);
+    }
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -203,99 +227,17 @@ const POKEMON_DB = {
     151: { name: '뮤',       type: 'psychic', skillName: '✨ 미라이트',   maxPp: 10, reqLevel: 99, reqAffinity: 0, nextEvo: null, reqStone: null, baseStats: { hp: 100, atk: 100, def: 100, spAtk: 100, spDef: 100, spd: 100 } }
 };
 
-// 🗺️ 관동 지방 8개 지역 & 원작 관장 보스 스폰 구성
+// 관동 지방 8개 지역 & 관장 보스 스폰 구성
 const ZONES = {
-    1: { 
-        id: 1, 
-        name: '1지역 - 회색시티 & 1, 2번 도로', 
-        minLevel: 2, 
-        maxLevel: 8, 
-        pool: [10, 11, 13, 14, 16, 19, 21, 29, 32, 43, 69, 1], 
-        bossId: 95, 
-        bossLevel: 10, 
-        bossName: '체육관 관장 웅이 (롱스톤)', 
-        nextZoneId: 2 
-    },
-    2: { 
-        id: 2, 
-        name: '2지역 - 블루시티 & 달맞이산', 
-        minLevel: 9, 
-        maxLevel: 16, 
-        pool: [23, 27, 35, 39, 41, 46, 48, 50, 74, 102, 4, 7], 
-        bossId: 121, 
-        bossLevel: 18, 
-        bossName: '체육관 관장 이슬이 (아쿠스타)', 
-        nextZoneId: 3 
-    },
-    3: { 
-        id: 3, 
-        name: '3지역 - 갈색시티 & 디그다 동굴', 
-        minLevel: 17, 
-        maxLevel: 24, 
-        pool: [12, 15, 17, 20, 22, 25, 52, 54, 56, 58, 60, 63, 66], 
-        bossId: 26, 
-        bossLevel: 26, 
-        bossName: '체육관 관장 마티스 (라이츄)', 
-        nextZoneId: 4 
-    },
-    4: { 
-        id: 4, 
-        name: '4지역 - 무지개시티 & 포켓몬 타워', 
-        minLevel: 25, 
-        maxLevel: 32, 
-        pool: [24, 28, 30, 33, 42, 44, 70, 72, 75, 81, 84, 88, 92, 93, 96, 133], 
-        bossId: 45, 
-        bossLevel: 34, 
-        bossName: '체육관 관장 민화 (라플레시아)', 
-        nextZoneId: 5 
-    },
-    5: { 
-        id: 5, 
-        name: '5지역 - 연분홍시티 & 사파리존', 
-        minLevel: 33, 
-        maxLevel: 40, 
-        pool: [36, 38, 40, 47, 49, 51, 53, 55, 57, 61, 64, 67, 77, 79, 86, 90, 98, 100, 104, 109, 111, 114, 115, 128], 
-        bossId: 89, 
-        bossLevel: 42, 
-        bossName: '체육관 관장 독수 (질뻐기)', 
-        nextZoneId: 6 
-    },
-    6: { 
-        id: 6, 
-        name: '6지역 - 노랑시티 & 실프주식회사', 
-        minLevel: 41, 
-        maxLevel: 48, 
-        pool: [18, 31, 34, 59, 62, 71, 73, 78, 80, 82, 83, 85, 87, 101, 105, 108, 110, 112, 116, 117, 118, 119, 122, 137, 143, 147], 
-        bossId: 65, 
-        bossLevel: 50, 
-        bossName: '체육관 관장 초련 (후딘)', 
-        nextZoneId: 7 
-    },
-    7: { 
-        id: 7, 
-        name: '7지역 - 홍련섬 & 포켓몬 저택', 
-        minLevel: 49, 
-        maxLevel: 56, 
-        pool: [2, 5, 8, 76, 89, 91, 94, 97, 99, 103, 106, 107, 113, 120, 123, 124, 125, 126, 127, 129, 130, 131, 138, 140, 148], 
-        bossId: 126, 
-        bossLevel: 58, 
-        bossName: '체육관 관장 강재 (마그마)', 
-        nextZoneId: 8 
-    },
-    8: { 
-        id: 8, 
-        name: '8지역 - 상록시티 & 챔피언로드 (석영고원)', 
-        minLevel: 57, 
-        maxLevel: 70, 
-        pool: [3, 6, 9, 134, 135, 136, 139, 141, 142, 144, 145, 146, 149, 150, 151], 
-        bossId: 34, 
-        bossLevel: 75, 
-        bossName: '최종 관장 비주기 (니드킹)', 
-        nextZoneId: null 
-    }
+    1: { id: 1, name: '1지역 - 회색시티 & 1, 2번 도로', minLevel: 2, maxLevel: 8, pool: [10, 11, 13, 14, 16, 19, 21, 29, 32, 43, 69, 1], bossId: 95, bossLevel: 10, bossName: '체육관 관장 웅이 (롱스톤)', nextZoneId: 2 },
+    2: { id: 2, name: '2지역 - 블루시티 & 달맞이산', minLevel: 9, maxLevel: 16, pool: [23, 27, 35, 39, 41, 46, 48, 50, 74, 102, 4, 7], bossId: 121, bossLevel: 18, bossName: '체육관 관장 이슬이 (아쿠스타)', nextZoneId: 3 },
+    3: { id: 3, name: '3지역 - 갈색시티 & 디그다 동굴', minLevel: 17, maxLevel: 24, pool: [12, 15, 17, 20, 22, 25, 52, 54, 56, 58, 60, 63, 66], bossId: 26, bossLevel: 26, bossName: '체육관 관장 마티스 (라이츄)', nextZoneId: 4 },
+    4: { id: 4, name: '4지역 - 무지개시티 & 포켓몬 타워', minLevel: 25, maxLevel: 32, pool: [24, 28, 30, 33, 42, 44, 70, 72, 75, 81, 84, 88, 92, 93, 96, 133], bossId: 45, bossLevel: 34, bossName: '체육관 관장 민화 (라플레시아)', nextZoneId: 5 },
+    5: { id: 5, name: '5지역 - 연분홍시티 & 사파리존', minLevel: 33, maxLevel: 40, pool: [36, 38, 40, 47, 49, 51, 53, 55, 57, 61, 64, 67, 77, 79, 86, 90, 98, 100, 104, 109, 111, 114, 115, 128], bossId: 89, bossLevel: 42, bossName: '체육관 관장 독수 (질뻐기)', nextZoneId: 6 },
+    6: { id: 6, name: '6지역 - 노랑시티 & 실프주식회사', minLevel: 41, maxLevel: 48, pool: [18, 31, 34, 59, 62, 71, 73, 78, 80, 82, 83, 85, 87, 101, 105, 108, 110, 112, 116, 117, 118, 119, 122, 137, 143, 147], bossId: 65, bossLevel: 50, bossName: '체육관 관장 초련 (후딘)', nextZoneId: 7 },
+    7: { id: 7, name: '7지역 - 홍련섬 & 포켓몬 저택', minLevel: 49, maxLevel: 56, pool: [2, 5, 8, 76, 89, 91, 94, 97, 99, 103, 106, 107, 113, 120, 123, 124, 125, 126, 127, 129, 130, 131, 138, 140, 148], bossId: 126, bossLevel: 58, bossName: '체육관 관장 강재 (마그마)', nextZoneId: 8 },
+    8: { id: 8, name: '8지역 - 상록시티 & 챔피언로드 (석영고원)', minLevel: 57, maxLevel: 70, pool: [3, 6, 9, 134, 135, 136, 139, 141, 142, 144, 145, 146, 149, 150, 151], bossId: 34, bossLevel: 75, bossName: '최종 관장 비주기 (니드킹)', nextZoneId: null }
 };
-
-const users = {};
 
 function calculateStats(pokemonId, level) {
     const base = POKEMON_DB[pokemonId].baseStats;
@@ -347,6 +289,28 @@ wss.on('connection', (ws) => {
         }
 
         if (data.type === 'INIT') {
+            // 1. 기존 유저 세션 재접속 처리
+            if (data.savedUserId && users[data.savedUserId]) {
+                userId = data.savedUserId;
+                if (data.nickname) {
+                    users[userId].nickname = data.nickname;
+                }
+                users[userId].activeWild = null;
+                users[userId].location = '마을';
+
+                ws.send(JSON.stringify({
+                    type: 'STATE_UPDATE',
+                    user: users[userId],
+                    savedUserId: userId,
+                    msg: `🎉 [${users[userId].nickname}]님, 모험을 재개합니다! (파트너: ${users[userId].partner.name} Lv.${users[userId].partner.level})`
+                }));
+
+                saveGameData();
+                broadcastUserList();
+                return;
+            }
+
+            // 2. 신규 유저 생성
             userId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
             const starterId = parseInt(data.starterId) || 1;
             const starterInfo = POKEMON_DB[starterId];
@@ -383,8 +347,11 @@ wss.on('connection', (ws) => {
             ws.send(JSON.stringify({
                 type: 'STATE_UPDATE',
                 user: users[userId],
+                savedUserId: userId,
                 msg: `🎮 환영합니다, ${users[userId].nickname}님! 파트너 [${starterInfo.name}]와 함께 모험을 시작합니다.`
             }));
+
+            saveGameData();
             broadcastUserList();
             return;
         }
@@ -402,9 +369,8 @@ wss.on('connection', (ws) => {
             const zone = ZONES[user.currentZone];
             const wildId = zone.pool[Math.floor(Math.random() * zone.pool.length)];
             
-            // ✨ 이로치 확률 1% (0.01) 적용
+            // 이로치 1% 확률
             const isShiny = Math.random() < 0.01; 
-            
             const wildLevel = Math.floor(Math.random() * (zone.maxLevel - zone.minLevel + 1)) + zone.minLevel;
             const wildStats = calculateStats(wildId, wildLevel);
 
@@ -470,7 +436,6 @@ wss.on('connection', (ws) => {
 
             wild.hp = Math.max(0, wild.hp - partnerDmg);
 
-            // 상대 포켓몬 쓰러짐 처리
             if (wild.hp <= 0) {
                 const expGained = wild.level * 15;
                 const goldGained = wild.level * 80 + (wild.isBoss ? 2000 : 0);
@@ -481,7 +446,6 @@ wss.on('connection', (ws) => {
 
                 logMsg += `\n🎉 야생 포켓몬을 쓰러뜨렸습니다! (+${expGained} EXP, +${goldGained}G, 친밀도 +0.5%)`;
 
-                // 레벨업 처리
                 if (partner.exp >= partner.maxExp) {
                     partner.level += 1;
                     partner.exp -= partner.maxExp;
@@ -491,7 +455,6 @@ wss.on('connection', (ws) => {
                     logMsg += ` 🌟 레벨 업! (Lv.${partner.level})`;
                 }
 
-                // 보스 처치 시 다음 지역 해금
                 if (wild.isBoss) {
                     const currentZoneObj = ZONES[user.currentZone];
                     if (currentZoneObj.nextZoneId && !user.unlockedZones.includes(currentZoneObj.nextZoneId)) {
@@ -503,6 +466,7 @@ wss.on('connection', (ws) => {
                 user.activeWild = null;
                 user.location = '마을';
 
+                saveGameData();
                 ws.send(JSON.stringify({
                     type: 'BATTLE_END',
                     user: user,
@@ -512,7 +476,6 @@ wss.on('connection', (ws) => {
                 return;
             }
 
-            // 야생 포켓몬 반격
             let wildDmg = Math.max(1, Math.floor(wild.stats.atk - partner.stats.def * 0.5));
             if (action === 'DEFEND') wildDmg = Math.floor(wildDmg * 0.4);
 
@@ -523,6 +486,7 @@ wss.on('connection', (ws) => {
                 user.activeWild = null;
                 user.location = '마을';
                 logMsg += `\n💀 파트너 포켓몬이 쓰러졌습니다! 센터에서 치료받으세요.`;
+                saveGameData();
                 ws.send(JSON.stringify({
                     type: 'BATTLE_END',
                     user: user,
@@ -574,6 +538,7 @@ wss.on('connection', (ws) => {
                 user.activeWild = null;
                 user.location = '마을';
 
+                saveGameData();
                 ws.send(JSON.stringify({
                     type: 'CATCH_SUCCESS',
                     user: user,
@@ -655,6 +620,7 @@ wss.on('connection', (ws) => {
                 user.location = '마을';
                 user.activeWild = null;
 
+                saveGameData();
                 ws.send(JSON.stringify({
                     type: 'STATE_UPDATE',
                     user: user,
@@ -695,6 +661,8 @@ wss.on('connection', (ws) => {
                     user.partner.hp = user.partner.stats.maxHp;
                     msg += ` 🎉 레벨 업! (Lv.${user.partner.level})`;
                 }
+
+                saveGameData();
                 ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: msg }));
                 broadcastUserList();
             } else {
@@ -713,6 +681,8 @@ wss.on('connection', (ws) => {
                 user.partner.hp = user.partner.stats.maxHp;
                 user.partner.pp = user.partner.maxPp;
                 user.partner.affinity = Math.min(100.0, user.partner.affinity + 2.0);
+
+                saveGameData();
                 ws.send(JSON.stringify({ type: 'STATE_UPDATE', user: user, msg: `🏥 파트너 포켓몬이 완치되고 스킬 PP가 회복되었습니다!` }));
             } else {
                 ws.send(JSON.stringify({ type: 'LOG', msg: '치료 골드가 부족합니다.' }));
@@ -731,13 +701,11 @@ wss.on('connection', (ws) => {
                 return;
             }
 
-            // 레벨 조건 검증
             if (user.partner.level < pInfo.reqLevel) {
                 ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 레벨이 부족합니다! (필요 레벨: Lv.${pInfo.reqLevel}, 현재: Lv.${user.partner.level})` }));
                 return;
             }
 
-            // 친밀도 조건 검증
             const currentAffinity = user.partner.affinity || 0;
             const reqAff = pInfo.reqAffinity || 0;
             if (reqAff > 0 && currentAffinity < reqAff) {
@@ -745,21 +713,18 @@ wss.on('connection', (ws) => {
                 return;
             }
 
-            // 진화의 돌 조건 검증
             if (pInfo.reqStone && (user.inventory[pInfo.reqStone] || 0) <= 0) {
                 ws.send(JSON.stringify({ type: 'LOG', msg: `❌ 진화에 [${pInfo.reqStone}] 아이템이 필요합니다.` }));
                 return;
             }
 
-            // 진화의 돌 차감
-           if (pInfo.reqStone) {
-                user.inventory[pInfo.reqStone] = (user.inventory[pInfo.reqStone] || 1) - 1;
+            if (pInfo.reqStone) {
+                user.inventory[pInfo.reqStone] -= 1;
                 if (user.inventory[pInfo.reqStone] <= 0) {
                     delete user.inventory[pInfo.reqStone];
                 }
             }
 
-            // 진화 실행
             const nextInfo = POKEMON_DB[pInfo.nextEvo];
             user.partner.id = pInfo.nextEvo;
             user.partner.name = nextInfo.name;
@@ -770,6 +735,7 @@ wss.on('connection', (ws) => {
             user.partner.stats = calculateStats(user.partner.id, user.partner.level);
             user.partner.hp = user.partner.stats.maxHp;
 
+            saveGameData();
             ws.send(JSON.stringify({ 
                 type: 'STATE_UPDATE', 
                 user: user, 
@@ -788,6 +754,7 @@ wss.on('connection', (ws) => {
 
     ws.on('close', () => {
         if (userId && users[userId]) {
+            saveGameData();
             delete users[userId];
             broadcastUserList();
         }
