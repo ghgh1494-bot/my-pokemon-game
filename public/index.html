@@ -209,6 +209,16 @@
                     <div id="status-card-name" class="font-game text-lg text-amber-300">이상해씨</div>
                     <div id="status-card-level" class="text-xs text-slate-400">Lv.1 (EXP 0%)</div>
                 </div>
+                <!-- 🎒 보유 아이템 (인벤토리) 영역 -->
+            <div class="mt-4 pt-3 border-t border-slate-700/80">
+                <div class="text-[11px] font-bold text-slate-400 mb-2 flex items-center gap-1">
+                    <i class="fa-solid fa-bag-shopping text-amber-400"></i> 보유 아이템
+                </div>
+                <div id="inventory-list" class="space-y-1 text-xs text-slate-300 font-mono">
+                    <!-- client.js에서 동적으로 [아이템이름] x [수량] 출력 -->
+                    <div class="text-slate-500 text-[11px]">보유한 아이템이 없습니다.</div>
+                </div>
+            </div>
 
                 <div class="space-y-2 text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
                     <div class="flex justify-between">
