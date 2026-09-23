@@ -329,18 +329,37 @@ function setMessage(msg) {
 function renderZoneList(zones, unlockedZones, currentZone) {
     const list = document.getElementById('zone-list');
     list.innerHTML = '';
+
+    // 숫자 타입으로 안전하게 변환
+    const activeZoneId = Number(currentZone);
+    const unlockedIds = unlockedZones.map(id => Number(id));
+
     zones.forEach(z => {
-        const isUnlocked = unlockedZones.includes(z.id);
-        const isCurrent = currentZone === z.id;
+        const zoneIdNum = Number(z.id);
+        const isUnlocked = unlockedIds.includes(zoneIdNum);
+        const isCurrent = activeZoneId === zoneIdNum;
+
         const div = document.createElement('div');
-        div.className = `p-3 rounded-xl border flex justify-between items-center ${isUnlocked ? 'bg-slate-800 border-slate-700' : 'bg-slate-900 border-slate-800 opacity-50'}`;
+        div.className = `p-3 rounded-xl border flex justify-between items-center ${
+            isUnlocked ? 'bg-slate-800 border-slate-700' : 'bg-slate-900 border-slate-800 opacity-50'
+        }`;
+
         div.innerHTML = `
             <div>
-                <div class="text-sm font-bold text-slate-200">${z.name} ${isCurrent ? '📌' : ''}</div>
+                <div class="text-sm font-bold text-slate-200">${z.name} ${isCurrent ? '📌 (현재 위치)' : ''}</div>
                 <div class="text-xs text-slate-400">Lv.${z.minLevel}~${z.maxLevel} | 보스: ${z.bossName}</div>
             </div>
-            <button onclick="changeZone(${z.id})" ${(!isUnlocked || isCurrent) ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg text-xs font-bold ${isUnlocked && !isCurrent ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-400'}">
-                ${!isUnlocked ? '🔒' : (isCurrent ? '현재' : '이동')}
+            <button 
+                onclick="changeZone(${zoneIdNum})" 
+                ${(!isUnlocked || isCurrent) ? 'disabled' : ''} 
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    isCurrent 
+                        ? 'bg-slate-700 text-slate-400 cursor-not-allowed' 
+                        : isUnlocked 
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer' 
+                            : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                }">
+                ${!isUnlocked ? '🔒 잠김' : (isCurrent ? '현재 위치' : '이동하기')}
             </button>
         `;
         list.appendChild(div);
@@ -352,7 +371,13 @@ function changeZone(zoneId) {
         alert('전투 중에는 지역을 이동할 수 없습니다! 도망치기를 먼저 이용해주세요.');
         return;
     }
-    ws.send(JSON.stringify({ type: 'CHANGE_ZONE', zoneId: zoneId }));
+    
+    // 숫자 타입으로 전달
+    ws.send(JSON.stringify({ 
+        type: 'CHANGE_ZONE', 
+        zoneId: Number(zoneId) 
+    }));
+    
     closeModal('zone-modal');
 }
 
