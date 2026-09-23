@@ -35,6 +35,110 @@ const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
+// ==========================================
+// 🛠️ 관리자 웹페이지 대시보드 라우터 추가
+// ==========================================
+app.get('/admin', (req, res) => {
+    // 간단한 HTML 관리자 페이지 렌더링
+    let userRows = '';
+    const allUsers = Object.values(users);
+
+    if (allUsers.length === 0) {
+        userRows = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #888;">현재 접속 중이거나 저장된 유저가 없습니다.</td></tr>`;
+    } else {
+        allUsers.forEach(u => {
+            const p = u.partner || {};
+            userRows += `
+                <tr style="border-bottom: 1px solid #334155;">
+                    <td style="padding: 10px; font-family: monospace; font-size: 12px; color: #94a3b8;">${u.id}</td>
+                    <td style="padding: 10px; font-weight: bold; color: #f8fafc;">${u.nickname || '익명'}</td>
+                    <td style="padding: 10px; color: #38bdf8;">${p.name || '없음'} (Lv.${p.level || 1})</td>
+                    <td style="padding: 10px; color: #fbbf24;">${(u.gold || 0).toLocaleString()} G</td>
+                    <td style="padding: 10px; color: #a78bfa;">${u.currentZoneName || '1지역'}</td>
+                    <td style="padding: 10px; color: #cbd5e1;">${u.location || '마을'}</td>
+                    <td style="padding: 10px; text-align: center;">
+                        <button onclick="resetUser('${u.id}')" style="background-color: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px;">초기화</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    const html = `
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <title>포켓몬 게임 관리자 대시보드</title>
+        <style>
+            body { background-color: #0f172a; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; }
+            .container { max-width: 1000px; margin: 0 auto; background: #1e293b; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
+            h1 { font-size: 24px; margin-bottom: 20px; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #0f172a; border-radius: 8px; overflow: hidden; }
+            th { background-color: #334155; color: #cbd5e1; padding: 12px; text-align: left; font-size: 13px; }
+            .refresh-btn { background-color: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; float: right; }
+            .refresh-btn:hover { background-color: #059669; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div>
+                <button class="refresh-btn" onclick="location.reload()">🔄 새로고침</button>
+                <h1>🎮 포켓몬 게임 유저 관리자 패널</h1>
+            </div>
+            <p style="color: #94a3b8; font-size: 13px;">현재 서버에 등록되어 있는 모든 트레이너 목록입니다. 특정 유저를 초기화하면 해당 유저는 처음부터 다시 시작하게 됩니다.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>닉네임</th>
+                        <th>파트너 포켓몬</th>
+                        <th>소유 골드</th>
+                        <th>현재 지역</th>
+                        <th>위치</th>
+                        <th style="text-align: center;">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${userRows}
+                </tbody>
+            </table>
+        </div>
+
+        <script>
+            function resetUser(userId) {
+                if (confirm('정말로 이 유저 데이터를 완전히 초기화(삭제)하시겠습니까?')) {
+                    fetch('/api/admin/reset', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: userId })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.msg);
+                        location.reload();
+                    })
+                    .catch(err => alert('초기화 실패: ' + err));
+                }
+            }
+        </script>
+    </body>
+    </html>
+    `;
+    res.send(html);
+});
+
+// 관리자 삭제 API 엔드포인트
+app.post('/api/admin/reset', (req, res) => {
+    const { userId } = req.body;
+    if (userId && users[userId]) {
+        delete users[userId];
+        saveGameData(); // 파일 및 메모리에서 제거
+        res.json({ success: true, msg: '성공적으로 유저 데이터가 초기화되었습니다.' });
+    } else {
+        res.status(404).json({ success: false, msg: '유저를 찾을 수 없습니다.' });
+    }
+});
 app.use(express.json());
 
 // 속성 상성표 (공격 타입 -> 방어 타입 비율)
