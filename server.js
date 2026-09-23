@@ -34,12 +34,28 @@ const wss = new WebSocket.Server({ server });
 
 const PORT = process.env.PORT || 3000;
 
+// 💡 [중요] 미들웨어와 API 라우터는 정적 파일 및 게임 로직보다 먼저 위치해야 합니다.
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
 // ==========================================
-// 🛠️ 관리자 웹페이지 대시보드 라우터 추가
+// 🛠️ 관리자 삭제 API 엔드포인트
+// ==========================================
+app.post('/api/admin/reset', (req, res) => {
+    const { userId } = req.body;
+    if (userId && users[userId]) {
+        delete users[userId];
+        saveGameData(); // 파일 및 메모리에서 제거
+        res.json({ success: true, msg: '성공적으로 유저 데이터가 초기화되었습니다.' });
+    } else {
+        res.status(404).json({ success: false, msg: '유저를 찾을 수 없습니다.' });
+    }
+});
+
+// ==========================================
+// 🛠️ 관리자 웹페이지 대시보드 라우터
 // ==========================================
 app.get('/admin', (req, res) => {
-    // 간단한 HTML 관리자 페이지 렌더링
     let userRows = '';
     const allUsers = Object.values(users);
 
@@ -127,19 +143,6 @@ app.get('/admin', (req, res) => {
     `;
     res.send(html);
 });
-
-// 관리자 삭제 API 엔드포인트
-app.post('/api/admin/reset', (req, res) => {
-    const { userId } = req.body;
-    if (userId && users[userId]) {
-        delete users[userId];
-        saveGameData(); // 파일 및 메모리에서 제거
-        res.json({ success: true, msg: '성공적으로 유저 데이터가 초기화되었습니다.' });
-    } else {
-        res.status(404).json({ success: false, msg: '유저를 찾을 수 없습니다.' });
-    }
-});
-app.use(express.json());
 
 // 속성 상성표 (공격 타입 -> 방어 타입 비율)
 const TYPE_CHART = {
@@ -394,9 +397,6 @@ wss.on('connection', (ws) => {
         }
 
         if (data.type === 'INIT') {
-            console.log(`🔍 [INIT 요청 수신] savedUserId: ${data.savedUserId}, nickname: ${data.nickname}`);
-
-            // 1. 기존 유저 세션 재접속 처리
             if (data.savedUserId && users[data.savedUserId]) {
                 userId = data.savedUserId;
                 if (data.nickname) {
@@ -404,8 +404,6 @@ wss.on('connection', (ws) => {
                 }
                 users[userId].activeWild = null;
                 users[userId].location = '마을';
-
-                console.log(`🎉 [기존 유저 복구 성공] ID: ${userId}, 파트너: ${users[userId].partner.name}`);
 
                 ws.send(JSON.stringify({
                     type: 'STATE_UPDATE',
@@ -418,8 +416,7 @@ wss.on('connection', (ws) => {
                 broadcastUserList();
                 return;
             }
-            console.log(`✨ [신규 유저 생성] 기존 세션이 없거나 찾을 수 없습니다.`);
-            // 2. 신규 유저 생성
+
             userId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
             const starterId = parseInt(data.starterId) || 1;
             const starterInfo = POKEMON_DB[starterId];
@@ -478,7 +475,6 @@ wss.on('connection', (ws) => {
             const zone = ZONES[user.currentZone];
             const wildId = zone.pool[Math.floor(Math.random() * zone.pool.length)];
             
-            // 이로치 1% 확률
             const isShiny = Math.random() < 0.01; 
             const wildLevel = Math.floor(Math.random() * (zone.maxLevel - zone.minLevel + 1)) + zone.minLevel;
             const wildStats = calculateStats(wildId, wildLevel);
