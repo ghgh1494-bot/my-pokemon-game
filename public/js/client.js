@@ -13,16 +13,32 @@ const ballImages = {
     hyper: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png'
 };
 
+// 💡 1. 페이지 로드 시 기존 저장된 계정 ID가 있으면 자동 로그인 시도
+window.addEventListener('DOMContentLoaded', () => {
+    const savedUserId = localStorage.getItem('pokemon_user_id');
+    const savedNickname = localStorage.getItem('pokemon_nickname');
+
+    if (savedUserId && savedNickname) {
+        currentNickname = savedNickname;
+        initWebSocket(1, savedUserId); // 기존 저장된 ID로 접속 요청
+    }
+});
+
+// 2. 로그인 버튼 클릭 시
 document.getElementById('btn-login').addEventListener('click', () => {
     const input = document.getElementById('nickname-input').value.trim();
     if (!input) return alert('닉네임을 입력하세요!');
     
     const selectedStarter = document.querySelector('input[name="starter"]:checked').value;
     currentNickname = input;
-    initWebSocket(parseInt(selectedStarter));
+    
+    // 혹시 기존에 저장된 유저 ID가 있다면 함께 전달
+    const savedUserId = localStorage.getItem('pokemon_user_id');
+    initWebSocket(parseInt(selectedStarter), savedUserId);
 });
 
-function initWebSocket(starterId) {
+// 3. 웹소켓 초기화 함수 (savedUserId 인자 추가)
+function initWebSocket(starterId, savedUserId) {
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
@@ -30,12 +46,21 @@ function initWebSocket(starterId) {
         ws.send(JSON.stringify({ 
             type: 'INIT', 
             nickname: currentNickname, 
-            starterId: starterId 
+            starterId: starterId,
+            savedUserId: savedUserId || null // 서버로 기존 유저 ID 전달
         }));
     };
 
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
+
+        // 💡 4. 서버에서 유저 ID를 응답받으면 브라우저에 영구 저장
+        if (data.savedUserId) {
+            localStorage.setItem('pokemon_user_id', data.savedUserId);
+            if (data.user && data.user.nickname) {
+                localStorage.setItem('pokemon_nickname', data.user.nickname);
+            }
+        }
 
         if (data.type === 'STATE_UPDATE') {
             currentUserData = data.user;
@@ -452,7 +477,6 @@ document.getElementById('btn-boss').addEventListener('click', () => {
     ws.send(JSON.stringify({ type: 'CHALLENGE_BOSS' }));
 });
 
-// 🔥 [중요] '지역 이동' 버튼 클릭 이벤트 추가 (서버에 최신 지역 정보 요청)
 document.getElementById('btn-open-zone').addEventListener('click', () => {
     if (inBattleState) {
         alert('전투 중에는 지역을 이동할 수 없습니다!');
@@ -489,7 +513,6 @@ document.getElementById('btn-open-heal').addEventListener('click', () => {
     document.getElementById('heal-modal').classList.remove('hidden');
 });
 
-// [교체할 시작 위치: btn-open-evolve 이벤트 시작점]
 document.getElementById('btn-open-evolve').addEventListener('click', () => {
     if (inBattleState) {
         alert('전투 중에는 진화를 시도할 수 없습니다!');
@@ -498,7 +521,6 @@ document.getElementById('btn-open-evolve').addEventListener('click', () => {
     if (!currentUserData || !currentUserData.partner) return;
     const p = currentUserData.partner;
     
-    // 포켓몬 진화 정보 목록 (1세대 전체 지원)
     const evoInfo = {
         1:   { reqLv: 16, reqAff: '없음', stone: '없음' },
         2:   { reqLv: 32, reqAff: '100%', stone: '리프의 돌' },
@@ -553,11 +575,9 @@ document.getElementById('btn-confirm-heal').addEventListener('click', () => {
     closeModal('heal-modal'); 
 });
 
-// 🔥 진화 확정 버튼 안전 처리
 document.getElementById('btn-confirm-evolve').addEventListener('click', () => { 
     if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'EVOLVE' })); 
     }
     closeModal('evolve-modal'); 
 });
-// [교체 끝]
