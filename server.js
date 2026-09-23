@@ -388,7 +388,6 @@ wss.on('connection', (ws) => {
                     return;
                 }
 
-                // 해금된 지역 목록 비교
                 const unlocked = user.unlockedZones.map(id => parseInt(id, 10));
                 if (unlocked.includes(targetZoneId) && ZONES[targetZoneId]) {
                     user.currentZone = targetZoneId;
@@ -405,7 +404,7 @@ wss.on('connection', (ws) => {
                 } else {
                     ws.send(JSON.stringify({
                         type: 'LOG',
-                        msg: '❌ 아직 해금되지 않은 지역입니다. 보스를 먼저 처치하세요!'
+                        msg: '❌ 아직 해금되지 않은 지역입니다. 이전 지역 보스를 먼저 처치하세요!'
                     }));
                 }
             }
