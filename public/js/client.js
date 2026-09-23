@@ -147,43 +147,36 @@ function playPokeballAnim(isSuccess, callback) {
     const ballSprite = document.getElementById('ball-sprite');
     const enemyImg = document.getElementById('enemy-pokemon-img');
 
-    // 1. 초기화 및 볼 아이콘 설정
     ballSprite.src = ballImages[selectedBallType] || ballImages.poke;
-    ballContainer.className = "absolute left-6 bottom-2 w-10 h-10 z-30"; // 내 포켓몬 위치에서 시작
+    ballContainer.className = "absolute left-6 bottom-2 w-10 h-10 z-30";
     ballContainer.style.transform = "none";
     ballContainer.classList.remove('hidden');
 
-    // Step 1: 상대 포켓몬 방향으로 볼 투척 (0.6초)
     ballContainer.classList.add('animate-throw-target');
 
     setTimeout(() => {
-        // Step 2: 포켓몬 타격 및 볼 안으로 흡수 연출 (0.3초)
         ballContainer.classList.remove('animate-throw-target');
         enemyImg.classList.add('animate-absorb');
 
         setTimeout(() => {
-            // Step 3: 볼 바닥 착지 (0.4초)
             ballContainer.classList.add('animate-drop');
 
             setTimeout(() => {
-                // Step 4: 원작 스타일 4회 흔들림 (0.5초 x 4회 = 2.0초)
                 ballContainer.classList.remove('animate-drop');
                 ballContainer.classList.add('animate-shake-4times');
 
                 setTimeout(() => {
-                    // Step 5: 포획 결과 처리
                     ballContainer.classList.remove('animate-shake-4times');
                     ballContainer.classList.add('hidden');
                     enemyImg.classList.remove('animate-absorb');
 
                     if (!isSuccess) {
-                        // 포획 실패 시 상대 포켓몬 재출현
                         enemyImg.style.opacity = "1";
                         enemyImg.style.transform = "scale(1)";
                     }
 
                     if (callback) callback();
-                }, 2000); // 4회 흔들림 시간
+                }, 2000);
             }, 400);
         }, 300);
     }, 600);
@@ -191,7 +184,7 @@ function playPokeballAnim(isSuccess, callback) {
 
 function updateUI(user) {
     document.getElementById('player-gold').innerText = `${user.gold.toLocaleString()} G`;
-    document.getElementById('zone-display').innerText = user.currentZoneName || '연두마을';
+    document.getElementById('zone-display').innerText = user.currentZoneName || '1지역';
     document.getElementById('location-display').innerText = user.location;
     document.getElementById('caught-count').innerText = user.caughtList ? user.caughtList.length : 0;
 
@@ -224,7 +217,6 @@ function updateUI(user) {
     document.getElementById('count-super').innerText = user.balls.super || 0;
     document.getElementById('count-hyper').innerText = user.balls.hyper || 0;
 
-    // 🔥 서버에서 activeWild가 없거나 location이 마을이면 전투 상태 강제 해제 및 UI 완전 리셋
     if (!user.activeWild || user.location === '마을') {
         inBattleState = false;
         document.getElementById('enemy-hp-card').classList.add('invisible');
@@ -256,7 +248,6 @@ function toggleBattleButtons(inBattle) {
     const facilityBtns = ['btn-boss', 'btn-open-zone', 'btn-open-train', 'btn-open-heal', 'btn-open-evolve'];
 
     if (inBattle) {
-        // 전투 중: 탐색 및 마을 시설 버튼 비활성화, 배틀 액션 버튼 활성화
         btnExplore.classList.add('btn-disabled');
         btnExplore.disabled = true;
 
@@ -276,7 +267,6 @@ function toggleBattleButtons(inBattle) {
             }
         });
     } else {
-        // 비전투(마을) 상태: 탐색 및 마을 시설 버튼 활성화, 배틀 액션 버튼 비활성화
         btnExplore.classList.remove('btn-disabled');
         btnExplore.disabled = false;
 
@@ -296,16 +286,6 @@ function toggleBattleButtons(inBattle) {
             }
         });
     }
-}
-
-// 지역 이동 실행
-function changeZone(zoneId) {
-    if (inBattleState) {
-        alert('전투 중에는 지역을 이동할 수 없습니다! 도망치기를 먼저 이용해주세요.');
-        return;
-    }
-    ws.send(JSON.stringify({ type: 'CHANGE_ZONE', zoneId: zoneId }));
-    closeModal('zone-modal');
 }
 
 function selectBall(type) {
@@ -330,9 +310,8 @@ function renderZoneList(zones, unlockedZones, currentZone) {
     const list = document.getElementById('zone-list');
     list.innerHTML = '';
 
-    // 숫자 타입으로 안전하게 변환
     const activeZoneId = Number(currentZone);
-    const unlockedIds = unlockedZones.map(id => Number(id));
+    const unlockedIds = (unlockedZones || []).map(id => Number(id));
 
     zones.forEach(z => {
         const zoneIdNum = Number(z.id);
@@ -350,6 +329,7 @@ function renderZoneList(zones, unlockedZones, currentZone) {
                 <div class="text-xs text-slate-400">Lv.${z.minLevel}~${z.maxLevel} | 보스: ${z.bossName}</div>
             </div>
             <button 
+                type="button"
                 onclick="changeZone(${zoneIdNum})" 
                 ${(!isUnlocked || isCurrent) ? 'disabled' : ''} 
                 class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -366,20 +346,22 @@ function renderZoneList(zones, unlockedZones, currentZone) {
     });
 }
 
-function changeZone(zoneId) {
+// 🔥 HTML onclick 지정을 위한 전역 스코프(window) 함수 바인딩
+window.changeZone = function(zoneId) {
     if (inBattleState) {
         alert('전투 중에는 지역을 이동할 수 없습니다! 도망치기를 먼저 이용해주세요.');
         return;
     }
     
-    // 숫자 타입으로 전달
-    ws.send(JSON.stringify({ 
-        type: 'CHANGE_ZONE', 
-        zoneId: Number(zoneId) 
-    }));
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ 
+            type: 'CHANGE_ZONE', 
+            zoneId: Number(zoneId) 
+        }));
+    }
     
     closeModal('zone-modal');
-}
+};
 
 function renderPokedexGrid(caughtList) {
     const grid = document.getElementById('pokedex-grid');
@@ -445,13 +427,25 @@ document.getElementById('btn-defend').addEventListener('click', () => ws.send(JS
 document.getElementById('btn-catch').addEventListener('click', () => ws.send(JSON.stringify({ type: 'CATCH_ATTEMPT', ballType: selectedBallType })));
 document.getElementById('btn-run').addEventListener('click', () => ws.send(JSON.stringify({ type: 'BATTLE_ACTION', action: 'RUN' })));
 
-// 시설 모달 버튼
+// 시설 모달 버튼 핸들러
 document.getElementById('btn-boss').addEventListener('click', () => {
     if (inBattleState) {
         alert('전투 중에는 보스 도전을 새로 시작할 수 없습니다!');
         return;
     }
     ws.send(JSON.stringify({ type: 'CHALLENGE_BOSS' }));
+});
+
+// 🔥 [중요] '지역 이동' 버튼 클릭 이벤트 추가 (서버에 최신 지역 정보 요청)
+document.getElementById('btn-open-zone').addEventListener('click', () => {
+    if (inBattleState) {
+        alert('전투 중에는 지역을 이동할 수 없습니다!');
+        return;
+    }
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'REQ_ZONE_INFO' }));
+    }
+    document.getElementById('zone-modal').classList.remove('hidden');
 });
 
 document.getElementById('btn-open-train').addEventListener('click', () => {
@@ -487,14 +481,27 @@ document.getElementById('btn-open-evolve').addEventListener('click', () => {
     if (!currentUserData) return;
     const p = currentUserData.partner;
     
+    // 🔥 친밀도 및 돌 필요 조건 매핑
     const evoInfo = {
-        1:  { reqLv: 16, reqAff: '없음', stone: '없음' },
-        2:  { reqLv: 32, reqAff: '100%', stone: '리프의 돌' },
-        4:  { reqLv: 16, reqAff: '없음', stone: '없음' },
-        5:  { reqLv: 36, reqAff: '100%', stone: '불꽃의 돌' },
-        7:  { reqLv: 16, reqAff: '없음', stone: '없음' },
-        8:  { reqLv: 36, reqAff: '100%', stone: '물의 돌' },
-        25: { reqLv: 1,  reqAff: '100%', stone: '천둥의 돌' }
+        1:   { reqLv: 16, reqAff: '없음', stone: '없음' },
+        2:   { reqLv: 32, reqAff: '100%', stone: '리프의 돌' },
+        4:   { reqLv: 16, reqAff: '없음', stone: '없음' },
+        5:   { reqLv: 36, reqAff: '100%', stone: '불꽃의 돌' },
+        7:   { reqLv: 16, reqAff: '없음', stone: '없음' },
+        8:   { reqLv: 36, reqAff: '100%', stone: '물의 돌' },
+        25:  { reqLv: 20, reqAff: '100%', stone: '천둥의 돌' },
+        30:  { reqLv: 36, reqAff: '100%', stone: '달의 돌' },
+        33:  { reqLv: 36, reqAff: '100%', stone: '달의 돌' },
+        35:  { reqLv: 20, reqAff: '100%', stone: '달의 돌' },
+        39:  { reqLv: 20, reqAff: '100%', stone: '달의 돌' },
+        44:  { reqLv: 36, reqAff: '100%', stone: '리프의 돌' },
+        58:  { reqLv: 30, reqAff: '100%', stone: '불꽃의 돌' },
+        61:  { reqLv: 36, reqAff: '100%', stone: '물의 돌' },
+        70:  { reqLv: 36, reqAff: '100%', stone: '리프의 돌' },
+        90:  { reqLv: 20, reqAff: '100%', stone: '물의 돌' },
+        102: { reqLv: 20, reqAff: '100%', stone: '리프의 돌' },
+        120: { reqLv: 20, reqAff: '100%', stone: '물의 돌' },
+        133: { reqLv: 20, reqAff: '100%', stone: '진화의 돌 필요' }
     }[p.id] || { reqLv: 99, reqAff: '최대', stone: '최종 진화 완료' };
 
     document.getElementById('evolve-req-level').innerText = evoInfo.reqLv === 99 ? '최종 진화' : `Lv.${evoInfo.reqLv}`;
@@ -502,6 +509,7 @@ document.getElementById('btn-open-evolve').addEventListener('click', () => {
     document.getElementById('evolve-stone-name').innerText = evoInfo.stone;
     document.getElementById('evolve-modal').classList.remove('hidden');
 });
+
 document.getElementById('btn-confirm-train').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'TRAIN' })); closeModal('train-modal'); });
 document.getElementById('btn-confirm-heal').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'HEAL' })); closeModal('heal-modal'); });
 document.getElementById('btn-confirm-evolve').addEventListener('click', () => { ws.send(JSON.stringify({ type: 'EVOLVE' })); closeModal('evolve-modal'); });
