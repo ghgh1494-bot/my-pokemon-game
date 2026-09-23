@@ -253,24 +253,59 @@ function updatePartnerHpUI(hp, maxHp) {
 function toggleBattleButtons(inBattle) {
     const btnExplore = document.getElementById('btn-explore');
     const battleBtns = ['btn-attack', 'btn-skill', 'btn-defend', 'btn-catch', 'btn-run'];
+    const facilityBtns = ['btn-boss', 'btn-open-zone', 'btn-open-train', 'btn-open-heal', 'btn-open-evolve'];
 
     if (inBattle) {
+        // 전투 중: 탐색 및 마을 시설 버튼 비활성화, 배틀 액션 버튼 활성화
         btnExplore.classList.add('btn-disabled');
         btnExplore.disabled = true;
+
+        facilityBtns.forEach(id => {
+            const b = document.getElementById(id);
+            if (b) {
+                b.classList.add('btn-disabled');
+                b.disabled = true;
+            }
+        });
+
         battleBtns.forEach(id => {
             const b = document.getElementById(id);
-            b.classList.remove('btn-disabled');
-            b.disabled = false;
+            if (b) {
+                b.classList.remove('btn-disabled');
+                b.disabled = false;
+            }
         });
     } else {
+        // 비전투(마을) 상태: 탐색 및 마을 시설 버튼 활성화, 배틀 액션 버튼 비활성화
         btnExplore.classList.remove('btn-disabled');
         btnExplore.disabled = false;
+
+        facilityBtns.forEach(id => {
+            const b = document.getElementById(id);
+            if (b) {
+                b.classList.remove('btn-disabled');
+                b.disabled = false;
+            }
+        });
+
         battleBtns.forEach(id => {
             const b = document.getElementById(id);
-            b.classList.add('btn-disabled');
-            b.disabled = true;
+            if (b) {
+                b.classList.add('btn-disabled');
+                b.disabled = true;
+            }
         });
     }
+}
+
+// 지역 이동 실행
+function changeZone(zoneId) {
+    if (inBattleState) {
+        alert('전투 중에는 지역을 이동할 수 없습니다! 도망치기를 먼저 이용해주세요.');
+        return;
+    }
+    ws.send(JSON.stringify({ type: 'CHANGE_ZONE', zoneId: zoneId }));
+    closeModal('zone-modal');
 }
 
 function selectBall(type) {
