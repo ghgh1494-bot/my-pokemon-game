@@ -22,6 +22,7 @@ if (fs.existsSync(SAVE_FILE_PATH)) {
 function saveGameData() {
     try {
         fs.writeFileSync(SAVE_FILE_PATH, JSON.stringify(users, null, 2), 'utf-8');
+        console.log('💾 [데이터베이스] 게임 데이터가 성공적으로 파일에 저장되었습니다.');
     } catch (e) {
         console.error('⚠️ 데이터 저장 중 오류 발생:', e);
     }
@@ -289,6 +290,8 @@ wss.on('connection', (ws) => {
         }
 
         if (data.type === 'INIT') {
+            console.log(`🔍 [INIT 요청 수신] savedUserId: ${data.savedUserId}, nickname: ${data.nickname}`);
+
             // 1. 기존 유저 세션 재접속 처리
             if (data.savedUserId && users[data.savedUserId]) {
                 userId = data.savedUserId;
@@ -297,6 +300,8 @@ wss.on('connection', (ws) => {
                 }
                 users[userId].activeWild = null;
                 users[userId].location = '마을';
+
+                console.log(`🎉 [기존 유저 복구 성공] ID: ${userId}, 파트너: ${users[userId].partner.name}`);
 
                 ws.send(JSON.stringify({
                     type: 'STATE_UPDATE',
@@ -309,7 +314,7 @@ wss.on('connection', (ws) => {
                 broadcastUserList();
                 return;
             }
-
+            console.log(`✨ [신규 유저 생성] 기존 세션이 없거나 찾을 수 없습니다.`);
             // 2. 신규 유저 생성
             userId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
             const starterId = parseInt(data.starterId) || 1;
